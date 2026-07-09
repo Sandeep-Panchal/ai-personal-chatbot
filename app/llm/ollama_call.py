@@ -1,4 +1,5 @@
 from ollama import Client
+from app.config import settings
 
 class OllamaClient:
 
@@ -6,7 +7,7 @@ class OllamaClient:
 
         self.client = Client()
 
-    def ollama_chat(self, model_name, query, stream=False):
+    def ollama_chat(self, query):
 
         messages = [
             {
@@ -15,15 +16,18 @@ class OllamaClient:
             },
         ]
 
-        for part in self.client.chat(model_name, messages=messages, stream=stream):
+        for part in self.client.chat(
+            model=settings.llm.model_name,
+            messages=messages,
+            stream=settings.llm.stream
+            ):
+
             yield part['message']['content']
 
 if __name__ == "__main__":
 
     ollama_client = OllamaClient()
-    model_name = "llama3.1:8b"
-    query = "Hello, how are you?"
-    stream = True
+    
+    for response in ollama_client.ollama_chat(settings.llm.example_query):
 
-    for response in ollama_client.ollama_chat(model_name, query, stream):
         print(response, end="", flush=True)

@@ -1,21 +1,20 @@
-from app.llm.ollama_call import OllamaClient
 import streamlit as st
 
-ollama_client = OllamaClient()
+from app.config import settings
+from app.core.chat import ChatService
 
-st.title(":blue[AI Personal ChatBot]")
+chat = ChatService()
+
+st.title(f":blue[{settings.app.app_name}]")
 
 with st.sidebar:
     if st.button("New Chat"):
         # create new session
         pass
 
-prompt = st.chat_input("Say something")
-if prompt:
-    st.write(prompt)
+user_message = st.chat_input("Say something")
+if user_message:
+    st.write(user_message)
 
-    model_name = "llama3.1:8b"
-    stream = True
-
-    response = ollama_client.ollama_chat(model_name, prompt, stream)
+    response = chat.invoke_llm(user_message)
     st.write_stream(response)
