@@ -1,100 +1,88 @@
-# import streamlit as st
-
-# from app.config import settings
-# from app.core.chat import ChatService
-
-# chat = ChatService()
-
-# st.title(f":blue[{settings.app.page_title}]")
-
-# with st.sidebar:
-#     if st.button("New Chat"):
-#         # create new session
-#         pass
-
-# user_message = st.chat_input("Say something")
-# if user_message:
-#     st.write(user_message)
-
-#     response = chat.invoke_llm(user_message)
-#     st.write_stream(response)
-
-
 import streamlit as st
 
 from app.config import settings
 from app.core.chat import ChatService
 from app.core.session import SessionManager
 
-st.title(f":blue[{settings.app.page_title}]")
+# -------------------------------------------------------
+# Page Configuration
+# -------------------------------------------------------
 
-# Initialize session state
-if "session_id" not in st.session_state:
-    st.session_state.session_id = SessionManager().create_session()
-if "conversation_ended" not in st.session_state:
-    st.session_state.conversation_ended = False
+st.set_page_config(
+    page_title=settings.app.page_title,
+    page_icon="🤖",
+    layout="wide",
+)
+
+st.title(f"🤖 {settings.app.page_title}")
+
+# -------------------------------------------------------
+# Initialize Session State
+# -------------------------------------------------------
+
 if "chat_service" not in st.session_state:
     st.session_state.chat_service = ChatService()
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
 
-# with st.sidebar:
-#     if st.button("New Chat"):
-#         # create new session
-#         pass
+if "session_manager" not in st.session_state:
+    st.session_state.session_manager = SessionManager()
 
-# user_message = st.chat_input("Say something")
-# if user_message:
-#     st.write(user_message)
+if "session_id" not in st.session_state:
+    st.session_state.session_id = (
+        st.session_state.session_manager.create_session()
+    )
 
-#     response = chat.invoke_llm(user_message)
-#     st.write_stream(response)
+# -------------------------------------------------------
+# Sidebar
+# -------------------------------------------------------
 
-# Main content area - ONLY CONVERSATION AND RESULTS
-st.subheader("💬 Chat")
+with st.sidebar:
 
-# Display conversation
-chat_container = st.container()
-with chat_container:
-    for message in st.session_state.messages:
-        if message["role"] == "user":
-            with st.chat_message("user"):
-                # st.markdown(message["content"])
-                st.markdown(f"**You:** {message['content']}")
-        else:
-            with st.chat_message("assistant"):
-                # st.markdown(message["content"])
-                st.markdown(f"**Assistant:** {message['content']}")
-    
-    if st.session_state.conversation_ended:
-        with st.chat_message("assistant"):
-            st.info("Conversation Ended!")
+    st.header("💬 Chats")
 
-# Chat input (only show if conversation is active)
-if not st.session_state.conversation_ended:
-    if prompt := st.chat_input("👤 Write down your query..."):
-        # Add user message to chat
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Display user message immediately
-        with st.chat_message("user"):
-            st.markdown(f"**You:** {prompt}")
-        
-        # Get AI response
-        with st.chat_message("assistant"):
-            with st.spinner("🤔 **Thinking...**"):
-                response = st.session_state.chat_service.invoke_llm(prompt)
-                st.write_stream(response)
-                
-                # Display AI response
-                st.markdown(f"**Assistant:** {response}")
-                
-                # Add AI response to messages
-                st.session_state.messages.append({"role": "assistant", "content": response})
-                
-                # # Handle conversation end
-                # if conversation_ended :
-                #     st.session_state.conversation_ended = True
-                #     st.session_state.full_chat = full_chat
-                #     print("st.session_state.full_chat", st.session_state.full_chat)
-                #     st.rerun()
+    if st.button("➕ New Chat", use_container_width=True):
+
+        st.session_state.session_id = (
+            st.session_state.session_manager.create_session()
+        )
+
+        # Phase 1: recreate ChatService
+        # Later this won't be needed when MemoryManager supports multiple sessions.
+        st.session_state.chat_service = ChatService()
+
+        st.rerun()
+
+# -------------------------------------------------------
+# Display Chat History
+# -------------------------------------------------------
+
+history = st.session_state.chat_service.get_history()
+
+for message in history:
+
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# -------------------------------------------------------
+# Chat Input
+# -------------------------------------------------------
+
+if prompt := st.chat_input("Message AI Personal ChatBot..."):
+
+    # Show user message immediately
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Stream assistant response
+    with st.chat_message("assistant"):
+
+        st.write_stream(
+
+            st.session_state.chat_service.chat(
+                session_id=st.session_state.session_id,
+                user_message=prompt,
+            )
+
+        )
+
+    # # Refresh UI so saved history is displayed
+    # st.rerun()

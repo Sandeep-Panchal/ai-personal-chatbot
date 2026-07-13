@@ -7,67 +7,84 @@ class MemoryManager:
             "messages": []
         }
 
-    def get_history(self,
-                    session_id: str,
-                    user_message: str,
-                    ai_message: str
-                    ):
+    def add_user_message(
+        self,
+        session_id: str,
+        message: str
+    ) -> None:
 
-        if not self.memory_dict.get("session_id", ""):
+        if not self.memory_dict["session_id"]:
             self.memory_dict["session_id"] = session_id
 
-        if ai_message:
-
-            assistant_msg_dict = {
-                "role": "assistant",
-                "content": ai_message
-                }
-
-            self.memory_dict["messages"].append(assistant_msg_dict)
-        
-        user_msg_dict = {
-            "role": "user",
-            "content": user_message
+        self.memory_dict["messages"].append(
+            {
+                "role": "user",
+                "content": message
             }
-        
-        self.memory_dict["messages"].append(user_msg_dict)
+        )
 
-        return self.memory_dict
-    
+    def add_ai_message(
+        self,
+        message: str
+    ) -> None:
+
+        self.memory_dict["messages"].append(
+            {
+                "role": "assistant",
+                "content": message
+            }
+        )
+
+    def get_history(self):
+
+        return self.memory_dict["messages"]
+
+    def clear_history(self):
+
+        self.memory_dict = {
+            "session_id": "",
+            "messages": []
+        }
+
 if __name__=="__main__":
 
-    import json
     from app.llm.ollama_call import OllamaClient
+    from app.core.session import SessionManager
 
-    obj = MemoryManager()
+    memory = MemoryManager()
+    session = SessionManager()
     ollama_client = OllamaClient()
     
     # for response in ollama_client.ollama_chat(settings.llm.example_query):
     #     print(response, end="", flush=True)
 
-    run = True
-    i = 0
-    sess = "123"
-    ai_message = None
-    while run:
-        i = i+1
-        if i == 4:
-            run = False
+    session_id = session.create_session()
+    while True:
         
-        user_message = input("Enter your query: ")
+        user_message = input("You: ")
 
-        history = obj.get_history(sess, user_message, ai_message)
-        history = json.dumps(history.get("messages", ""))
-        ai_message = " ".join(ollama_client.ollama_chat(history))
-        print(ai_message)
+        if user_message.lower() == "exit":
+            break
 
-    print(history)
+        # Step 1
+        memory.add_user_message(session_id, user_message)
 
+        # Step 2
+        history = memory.get_history()
 
+        # Step 3
+        ai_message = "".join(
+            ollama_client.ollama_chat(history)
+        )
 
+        print(f"Assistant: {ai_message}")
 
+        # Step 4
+        memory.add_ai_message(session_id, ai_message)
+        print("-"*50)
 
+    print("="*50)
+    print("\nConversation History\n")
 
-        
-
-
+    for message in memory.get_history():
+        print(message)
