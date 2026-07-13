@@ -270,14 +270,21 @@ Try asking:
                 else "🤖"
             )
 
-            with st.chat_message(
-                message["role"],
-                avatar=avatar,
-            ):
+            # with st.chat_message(
+            #     message["role"],
+            #     avatar=avatar,
+            # ):
 
-                st.markdown(
-                    message["content"]
-                )
+            #     st.markdown(
+            #         message["content"]
+            #     )
+
+            with st.chat_message(message["role"], avatar=avatar):
+                if message["role"] == "user":
+                    with st.container(border=True):
+                        st.markdown(message["content"])
+                else:
+                    st.markdown(message["content"])
 
 # -------------------------------------------------------
 # Chat Input
