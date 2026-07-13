@@ -1,35 +1,28 @@
 from ollama import Client
 from app.config import settings
-
-from pathlib import Path
-
-def load_system_prompt() -> str:
-    prompt_path = (
-        Path(__file__).parent.parent
-        / "prompts"
-        / "chat_system.txt"
-    )
-
-    return prompt_path.read_text(encoding="utf-8").strip()
+from app.utils.prompt_loading import PromptLoading
 
 class OllamaClient:
 
     def __init__(self):
 
         self.client = Client()
+        self.prompt_loader = PromptLoading()
 
-    def ollama_chat(self, messages):
+    def ollama_chat(self, history):
 
-        system_prompt = load_system_prompt()
+        self.system_prompt = self.prompt_loader.load_prompt(
+            self.prompt_loader.SYSTEM_PROMPT
+            )
 
-        llm_messages = [
+        messages = [
             {
                 "role": "system",
-                "content": system_prompt,
+                "content": self.system_prompt,
             }
         ]
 
-        llm_messages.extend(messages)
+        messages.extend(history)
 
         for part in self.client.chat(
             model=settings.llm.model_name,

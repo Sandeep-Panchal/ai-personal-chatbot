@@ -1,5 +1,6 @@
 from app.core.memory import MemoryManager
 from app.llm.ollama_call import OllamaClient
+from app.services.title_service import TitleService
 from typing import Generator
 
 class ChatService:
@@ -8,6 +9,7 @@ class ChatService:
 
         self.memory = MemoryManager()
         self.ollama = OllamaClient()
+        self.title_service = TitleService(self.ollama.client)
 
     def chat(
         self,
@@ -22,12 +24,7 @@ class ChatService:
         )
 
         # Step 2 - Get complete conversation history
-        history = self.memory.get_history()
-
-        # Step 3 - Send history to LLM
-        # ai_message = "".join(
-        #     self.ollama.ollama_chat(history)
-        # )
+        history = self.memory.get_session_history(session_id=session_id)
 
         # Step 3
         chunks = []
@@ -39,15 +36,34 @@ class ChatService:
 
         # Step 4 - Store AI response
         self.memory.add_ai_message(
+            session_id=session_id,
             message=ai_message.strip(),
         )
 
-    def get_history(self):
+        # Step 5 - Create title if not created
+        if self.memory.is_new_chat(session_id=session_id):
+            history = self.memory.get_session_history(session_id)
+            title = self.title_service.generate_title(history)
 
-        return self.memory.get_history()
+            self.memory.update_title(
+                session_id=session_id,
+                title=title,
+            )
     
+    def get_session_history(
+            self,
+            session_id: str
+            ):
+        
+        return self.memory.get_session_history(session_id)
+
+    def get_all_sessions(self):
+
+        return self.memory.get_all_sessions()
+
 if __name__ == "__main__":
 
+    import json
     from app.core.session import SessionManager
 
     session = SessionManager()
@@ -60,6 +76,14 @@ if __name__ == "__main__":
     while True:
 
         user_message = input("You: ")
+
+        if user_message.lower() == "new chat":
+            session_id = session.create_session()
+            print()
+            print("*"*30)
+            print("New chat session started...")
+            print("*"*30, "\n")
+            user_message = input("You: ")
 
         if user_message.lower() == "exit":
             break
@@ -75,6 +99,4 @@ if __name__ == "__main__":
 
     print("="*50)
     print("\nConversation History\n")
-
-    for message in chat_obj.get_history():
-        print(f"{message['role']:>10}: {message['content']}")
+    print(chat_obj.memory.sessions)

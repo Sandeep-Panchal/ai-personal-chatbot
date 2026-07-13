@@ -1,11 +1,11 @@
+from app.models.chat_session import ChatSession
+from datetime import datetime
+
 class MemoryManager:
 
     def __init__(self):
 
-        self.memory_dict = {
-            "session_id": "",
-            "messages": []
-        }
+        self.sessions: dict[str, ChatSession] = {}
 
     def add_user_message(
         self,
@@ -13,38 +13,72 @@ class MemoryManager:
         message: str
     ) -> None:
 
-        if not self.memory_dict["session_id"]:
-            self.memory_dict["session_id"] = session_id
+        if session_id not in self.sessions:
+            self.sessions[session_id] = ChatSession()
+            self.sessions[session_id].created_at = datetime.now()
 
-        self.memory_dict["messages"].append(
+        self.sessions[session_id].messages.append(
             {
                 "role": "user",
                 "content": message
             }
         )
 
+        self.sessions[session_id].updated_at = datetime.now()
+
     def add_ai_message(
         self,
+        session_id: str,
         message: str
     ) -> None:
+        
+        session = self.get_session(session_id)
 
-        self.memory_dict["messages"].append(
+        session.messages.append(
             {
                 "role": "assistant",
                 "content": message
             }
         )
 
-    def get_history(self):
+        session.updated_at = datetime.now()
 
-        return self.memory_dict["messages"]
+    def get_session(self, session_id: str) -> ChatSession:
 
-    def clear_history(self):
+        if session_id not in self.sessions:
+            self.sessions[session_id] = ChatSession()
 
-        self.memory_dict = {
-            "session_id": "",
-            "messages": []
-        }
+        return self.sessions[session_id]
+
+    def get_session_history(self, session_id: str,):
+
+        if session_id not in self.sessions:
+            self.sessions[session_id] = ChatSession()
+
+        return self.get_session(session_id).messages
+        # return self.sessions[session_id].messages
+    
+    def get_all_sessions(self):
+
+        return dict(
+            sorted(
+                self.sessions.items(),
+                key=lambda item: item[1].updated_at,
+                reverse=True,
+            )
+        )
+    
+    def is_new_chat(self, session_id: str) -> bool:
+
+        return self.sessions[session_id].title == "New Chat"
+    
+    def update_title(
+            self,
+            session_id: str,
+            title: str,
+        ):
+
+        self.get_session(session_id).title = title
 
 if __name__=="__main__":
 
@@ -63,6 +97,14 @@ if __name__=="__main__":
         
         user_message = input("You: ")
 
+        if user_message.lower() == "new chat":
+            session_id = session.create_session()
+            print()
+            print("*"*30)
+            print("New chat session started...")
+            print("*"*30, "\n")
+            user_message = input("You: ")
+
         if user_message.lower() == "exit":
             break
 
@@ -70,7 +112,7 @@ if __name__=="__main__":
         memory.add_user_message(session_id, user_message)
 
         # Step 2
-        history = memory.get_history()
+        history = memory.get_session_history(session_id)
 
         # Step 3
         ai_message = "".join(
@@ -86,5 +128,4 @@ if __name__=="__main__":
     print("="*50)
     print("\nConversation History\n")
 
-    for message in memory.get_history():
-        print(message)
+    print(memory.sessions)
