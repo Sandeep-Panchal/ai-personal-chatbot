@@ -56,15 +56,14 @@ class MemoryManager:
             self.sessions[session_id] = ChatSession()
 
         return self.get_session(session_id).messages
-        # return self.sessions[session_id].messages
     
     def get_all_sessions(self):
 
         return dict(
             sorted(
                 self.sessions.items(),
-                key=lambda item: item[1].updated_at,
-                reverse=True,
+                key=lambda item: item[1].created_at,
+                reverse=False,
             )
         )
     
@@ -88,9 +87,6 @@ if __name__=="__main__":
     memory = MemoryManager()
     session = SessionManager()
     ollama_client = OllamaClient()
-    
-    # for response in ollama_client.ollama_chat(settings.llm.example_query):
-    #     print(response, end="", flush=True)
 
     session_id = session.create_session()
     while True:
