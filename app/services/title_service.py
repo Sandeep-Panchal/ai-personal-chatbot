@@ -1,20 +1,12 @@
-from app.utils.prompt_loading import PromptLoading
 from app.config import settings
-
 
 class TitleService:
 
     def __init__(self, ollama_client):
 
         self.ollama = ollama_client
-        self.prompt_loader = PromptLoading()
 
     def generate_title(self, history: list[dict]) -> str:
-
-        #     title_prompt = self.prompt_loader.load_prompt(
-        #         self.prompt_loader.TITLE_PROMPT
-        #     )
-        # title_prompt = "Generate a concise chat TITLE specific to the conversation. Maximum 3 words. Return only TITLE of the chat."
 
         user = history[0]["content"]
         assistant = history[1]["content"]

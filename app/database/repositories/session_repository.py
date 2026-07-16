@@ -33,7 +33,7 @@ class SessionRepository:
         finally:
             connection.close()
 
-    def get_session_by_id(self, session_id: str)-> tuple[str, str, str, str] | None:
+    def fetch_session_by_id(self, session_id: str) -> tuple[str, str, str, str] | None:
 
         session_by_id_query = """
                 SELECT * FROM sessions
@@ -55,7 +55,7 @@ class SessionRepository:
         finally:
             connection.close()
         
-    def get_all_sessions(self)-> list[tuple[str, str, str, str]]:
+    def fetch_all_sessions(self)-> list[tuple[str, str, str, str]]:
 
         all_sessions_query = """SELECT * FROM sessions;"""
         
@@ -74,22 +74,53 @@ class SessionRepository:
         finally:
             connection.close()
 
+    def update_session_title(self,
+                             title: str,
+                             session_id: str
+                        ) -> bool:
+
+        update_title_query = """
+                    UPDATE sessions
+                    SET title = ?
+                    WHERE session_id = ?;
+                """
+        
+        try:
+            connection = DBConnection().get_connection()
+            cursor = connection.cursor()
+
+            cursor.execute(
+                update_title_query, (title, session_id)
+                )
+            connection.commit()
+
+            return True
+
+        except sqlite3.Error:
+            raise
+
+        finally:
+            connection.close()
+
 
 if __name__=="__main__":
 
     ses_repo = SessionRepository()
     
-    num = 6
+    num = 2
+
+    # row = ses_repo.fetch_session_ids()
+    # print(row)
     
-    if ses_repo.insert_session(num, f"title_{num}", f"start_{num}", f"end_{num}"):
-        print("Insertion successful")
+    # if ses_repo.insert_session(num, f"title_{num}", f"start_{num}", f"end_{num}"):
+    #     print("Insertion successful")
     
-    row = ses_repo.get_session_by_id("123")
+    row = ses_repo.fetch_session_by_id("123")
     print(row)
 
-    row = ses_repo.get_session_by_id("3")
-    print(row)
+    # row = ses_repo.fetch_session_by_id("3")
+    # print(row)
 
-    rows = ses_repo.get_all_sessions()
-    for row in rows:
-        print(row)
+    # rows = ses_repo.fetch_all_sessions()
+    # for row in rows:
+    #     print(row)

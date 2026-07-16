@@ -34,7 +34,7 @@ class MessageRepository:
         finally:
             connection.close()
 
-    def get_messages_by_session_id(self, session_id: str)-> tuple[int, str, str, str, str]:
+    def fetch_messages_by_session_id(self, session_id: str) -> list[tuple[int, str, str, str, str]]:
 
         messages_by_session_id_query = """
                 SELECT * FROM messages
@@ -57,7 +57,7 @@ class MessageRepository:
         finally:
             connection.close()
         
-    def get_all_messages(self)-> list[tuple[int, str, str, str, str]]:
+    def fetch_all_messages(self)-> list[tuple[int, str, str, str, str]]:
 
         all_messages_query = """SELECT * FROM messages;"""
         
@@ -83,15 +83,25 @@ if __name__=="__main__":
     
     num = 3
     
-    # if msg_repo.insert_message(num, f"role_{num}", f"message_{num}", f"start_{num}"):
+    # if msg_repo.insert_message(1, f"role_{num}", f"message_{num}", f"start_{num}"):
     #     print("Insertion successful")
     
-    # row = msg_repo.get_messages_by_session_id("123")
-    # print(row)
-
-    row = msg_repo.get_messages_by_session_id("3")
+    row = msg_repo.fetch_messages_by_session_id("1")
     print(row)
 
-    # rows = msg_repo.get_all_messages()
+    lst = []
+    for r in row:
+        temp_dic = {}
+        temp_dic["role"] = r[2]
+        temp_dic["content"] = r[3]
+        lst.append(temp_dic)
+
+    print(lst)
+
+
+    # row = msg_repo.fetch_messages_by_session_id("3")
+    # print(row)
+
+    # rows = msg_repo.fetch_all_messages()
     # for row in rows:
     #     print(row)

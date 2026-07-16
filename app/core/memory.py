@@ -1,127 +1,101 @@
-from app.models.chat_session import ChatSession
+from app.database.repositories.session_repository import SessionRepository
+from app.database.repositories.message_repository import MessageRepository
+
 from datetime import datetime
 
 class MemoryManager:
 
     def __init__(self):
 
-        self.sessions: dict[str, ChatSession] = {}
+        self.session_repo = SessionRepository()
+        self.message_repo = MessageRepository()
 
-    def add_user_message(
-        self,
-        session_id: str,
-        message: str
-    ) -> None:
+        self.default_title = "New Chat"
 
-        if session_id not in self.sessions:
-            self.sessions[session_id] = ChatSession()
-            self.sessions[session_id].created_at = datetime.now()
+    def add_session(self, session_id: str) -> None:
 
-        self.sessions[session_id].messages.append(
-            {
-                "role": "user",
-                "content": message
-            }
-        )
+        if self.session_repo.fetch_session_by_id(session_id) is None:
+            
+            created_at = datetime.now()
+            updated_at = datetime.now()
+            
+            self.session_repo.insert_session(session_id, self.default_title, created_at, updated_at)
 
-        self.sessions[session_id].updated_at = datetime.now()
+    def add_user_message(self,
+                          session_id: str,
+                          message: str,
+                          role="user"
+                        ) -> None:
 
-    def add_ai_message(
-        self,
-        session_id: str,
-        message: str
-    ) -> None:
+        created_at = datetime.now()
+        self.message_repo.insert_message(session_id, role, message, created_at)
+
+    def add_ai_message(self,
+                          session_id: str,
+                          message: str,
+                          role="assistant"
+                        ) -> None:
+
+        created_at = datetime.now()
+        self.message_repo.insert_message(session_id, role, message, created_at)
+
+    def get_message_history(self, session_id: str) -> list[tuple[int, str, str, str, str]]:
         
-        session = self.get_session(session_id)
-
-        session.messages.append(
-            {
-                "role": "assistant",
-                "content": message
-            }
-        )
-
-        session.updated_at = datetime.now()
-
-    def get_session(self, session_id: str) -> ChatSession:
-
-        if session_id not in self.sessions:
-            self.sessions[session_id] = ChatSession()
-
-        return self.sessions[session_id]
-
-    def get_session_history(self, session_id: str,):
-
-        if session_id not in self.sessions:
-            self.sessions[session_id] = ChatSession()
-
-        return self.get_session(session_id).messages
+        messages_data = self.message_repo.fetch_messages_by_session_id(session_id)
+        
+        return messages_data
     
-    def get_all_sessions(self):
+    def get_session(self, session_id: str) -> tuple[str, str, str, str] | None:
 
-        return dict(
-            sorted(
-                self.sessions.items(),
-                key=lambda item: item[1].created_at,
-                reverse=False,
-            )
-        )
+        return self.session_repo.fetch_session_by_id(session_id)
     
-    def is_new_chat(self, session_id: str) -> bool:
+    def update_title(self,
+                     title: str,
+                     session_id: str
+                    ) -> None:
+        
+        self.session_repo.update_session_title(title, session_id)
 
-        return self.sessions[session_id].title == "New Chat"
     
-    def update_title(
-            self,
-            session_id: str,
-            title: str,
-        ):
+    # def get_all_sessions(self):
 
-        self.get_session(session_id).title = title
+    #     return dict(
+    #         sorted(
+    #             self.sessions.items(),
+    #             key=lambda item: item[1].created_at,
+    #             reverse=False,
+    #         )
+    #     )
+    
+    # def is_new_chat(self, session_id: str) -> bool:
+
+    #     return self.sessions[session_id].title == "New Chat"
+    
+    # def update_title(
+    #         self,
+    #         session_id: str,
+    #         title: str,
+    #     ):
+
+    #     self.get_session(session_id).title = title
 
 if __name__=="__main__":
 
-    from app.llm.ollama_call import OllamaClient
+    # from app.llm.ollama_call import OllamaClient
     from app.core.session import SessionManager
 
     memory = MemoryManager()
     session = SessionManager()
-    ollama_client = OllamaClient()
+    # ollama_client = OllamaClient()
 
-    session_id = session.create_session()
-    while True:
-        
-        user_message = input("You: ")
+    # session_id = session.create_session()
+    
+    # n = 1
+    # title = f"title_{n}"
+    # created_at = f"created_{n}"
+    # updated_at = f"updated_{n}"
+    # memory.add_session(session_id, title, created_at, updated_at)
 
-        if user_message.lower() == "new chat":
-            session_id = session.create_session()
-            print()
-            print("*"*30)
-            print("New chat session started...")
-            print("*"*30, "\n")
-            user_message = input("You: ")
-
-        if user_message.lower() == "exit":
-            break
-
-        # Step 1
-        memory.add_user_message(session_id, user_message)
-
-        # Step 2
-        history = memory.get_session_history(session_id)
-
-        # Step 3
-        ai_message = "".join(
-            ollama_client.ollama_chat(history)
-        )
-
-        print(f"Assistant: {ai_message}")
-
-        # Step 4
-        memory.add_ai_message(session_id, ai_message)
-        print("-"*50)
-
-    print("="*50)
-    print("\nConversation History\n")
-
-    print(memory.sessions)
+    session_id = "1"
+    messages = memory.get_session_history(session_id)
+    print(messages)

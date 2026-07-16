@@ -11,22 +11,42 @@ class ChatService:
         self.ollama = OllamaClient()
         self.title_service = TitleService(self.ollama.client)
 
+        self.default_title = "New Chat"
+
+    def messages_input_formatting(self, messages_data: tuple):
+
+        message_history = []
+        for tup in messages_data:
+
+            temp_dic = {}
+            temp_dic["role"] = tup[2]
+            temp_dic["content"] = tup[3]
+            message_history.append(temp_dic)
+
+        return message_history
+
     def chat(
         self,
         session_id: str,
         user_message: str,
     ) -> Generator[str, None, None]:
 
-        # Step 1 - Store user message
+        # Step 1 - Store session
+        self.memory.add_session(session_id=session_id)
+
+        # Step 2 - Store user message
         self.memory.add_user_message(
             session_id=session_id,
             message=user_message,
         )
 
-        # Step 2 - Get complete conversation history
-        history = self.memory.get_session_history(session_id=session_id)
+        # Step 3 - Get complete conversation history
+        messages_data = self.get_message_history(session_id=session_id)
 
-        # Step 3
+        # Step 4 - Input message formatting as per LLM input acceptance
+        history = self.messages_input_formatting(messages_data=messages_data)
+
+        # Step 5
         chunks = []
         for chunk in self.ollama.ollama_chat(history):
             chunks.append(chunk)
@@ -34,28 +54,28 @@ class ChatService:
 
         ai_message = "".join(chunks)
 
-        # Step 4 - Store AI response
+        # Step 6 - Store AI response
         self.memory.add_ai_message(
             session_id=session_id,
             message=ai_message.strip(),
         )
 
-        # Step 5 - Create title if not created
-        if self.memory.is_new_chat(session_id=session_id):
-            history = self.memory.get_session_history(session_id)
+        # Step 7 - Create title if not created
+        session_data = self.memory.get_session(session_id=session_id)
+        if session_data[1] == self.default_title:
+            messages_data = self.get_message_history(session_id=session_id)
+            history = self.messages_input_formatting(messages_data=messages_data)
+
             title = self.title_service.generate_title(history)
 
             self.memory.update_title(
-                session_id=session_id,
                 title=title,
+                session_id=session_id
             )
     
-    def get_session_history(
-            self,
-            session_id: str
-            ):
+    def get_message_history(self, session_id: str) -> None:
         
-        return self.memory.get_session_history(session_id)
+        return self.memory.get_message_history(session_id)
 
     def get_all_sessions(self):
 
@@ -63,7 +83,6 @@ class ChatService:
 
 if __name__ == "__main__":
 
-    import json
     from app.core.session import SessionManager
 
     session = SessionManager()
@@ -96,7 +115,3 @@ if __name__ == "__main__":
         for chunk in response:
             print(chunk, end="", flush=True)
         print("-"*50)
-
-    print("="*50)
-    print("\nConversation History\n")
-    print(chat_obj.memory.sessions)
