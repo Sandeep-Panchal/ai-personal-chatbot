@@ -1,5 +1,8 @@
 from app.database.repositories.session_repository import SessionRepository
 from app.database.repositories.message_repository import MessageRepository
+from app.models.chat_session import ChatSession
+from app.models.chat_message import ChatMessage
+from datetime import datetime
 
 from datetime import datetime
 
@@ -16,36 +19,46 @@ class MemoryManager:
 
         if self.session_repo.fetch_session_by_id(session_id) is None:
             
-            created_at = datetime.now()
-            updated_at = datetime.now()
+            created_at = updated_at = datetime.now()
             
             self.session_repo.insert_session(session_id, self.default_title, created_at, updated_at)
+
+    def update_session_modified_time(self,
+                                     session_id: str,
+                                     updated_at: datetime
+                                    ):
+
+        self.session_repo.update_session_modified(session_id, updated_at)
 
     def add_user_message(self,
                           session_id: str,
                           message: str,
-                          role="user"
+                          role: str = "user"
                         ) -> None:
 
-        created_at = datetime.now()
-        self.message_repo.insert_message(session_id, role, message, created_at)
+        timestamp = datetime.now()
+        self.message_repo.insert_message(session_id, role, message, timestamp)
+
+        self.update_session_modified_time(session_id, timestamp)
 
     def add_ai_message(self,
                           session_id: str,
                           message: str,
-                          role="assistant"
+                          role: str = "assistant"
                         ) -> None:
 
-        created_at = datetime.now()
-        self.message_repo.insert_message(session_id, role, message, created_at)
+        timestamp = datetime.now()
+        self.message_repo.insert_message(session_id, role, message, timestamp)
 
-    def get_message_history(self, session_id: str) -> list[tuple[int, str, str, str, str]]:
+        self.update_session_modified_time(session_id, timestamp)
+
+    def get_message_history(self, session_id: str) -> list[ChatMessage]:
         
         messages_data = self.message_repo.fetch_messages_by_session_id(session_id)
         
         return messages_data
     
-    def get_session(self, session_id: str) -> tuple[str, str, str, str] | None:
+    def get_session_by_id(self, session_id: str) -> ChatSession | None:
 
         return self.session_repo.fetch_session_by_id(session_id)
     
@@ -55,29 +68,10 @@ class MemoryManager:
                     ) -> None:
         
         self.session_repo.update_session_title(title, session_id)
-
     
-    # def get_all_sessions(self):
+    def get_all_sessions(self) -> list[ChatSession]:
 
-    #     return dict(
-    #         sorted(
-    #             self.sessions.items(),
-    #             key=lambda item: item[1].created_at,
-    #             reverse=False,
-    #         )
-    #     )
-    
-    # def is_new_chat(self, session_id: str) -> bool:
-
-    #     return self.sessions[session_id].title == "New Chat"
-    
-    # def update_title(
-    #         self,
-    #         session_id: str,
-    #         title: str,
-    #     ):
-
-    #     self.get_session(session_id).title = title
+        return self.session_repo.fetch_all_sessions()
 
 if __name__=="__main__":
 

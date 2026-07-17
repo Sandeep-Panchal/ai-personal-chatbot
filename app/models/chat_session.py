@@ -1,14 +1,12 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-
 
 @dataclass
 class ChatSession:
-
-    title: str = "New Chat"
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    messages: list[dict] = field(default_factory=list)
+    session_id: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
 
 if __name__=="__main__":
 

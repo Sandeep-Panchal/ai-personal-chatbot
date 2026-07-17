@@ -1,3 +1,6 @@
+from app.database.init_db import DatabaseInitializer
+DatabaseInitializer().initialize_database()
+
 import streamlit as st
 
 from app.config import settings
@@ -63,9 +66,9 @@ with st.sidebar:
 
     if sessions:
 
-        for session_id, session in sessions.items():
+        for session in sessions:
 
-            active = session_id == st.session_state.session_id
+            active = session.session_id == st.session_state.session_id
 
             button_label = (
                 f"🟢 {session.title}"
@@ -75,11 +78,11 @@ with st.sidebar:
 
             if st.button(
                 button_label,
-                key=session_id,
+                key=session.session_id,
                 use_container_width=True,
             ):
 
-                st.session_state.session_id = session_id
+                st.session_state.session_id = session.session_id
                 st.rerun()
 
     else:
@@ -121,7 +124,7 @@ with st.container(border=True):
 
 sessions = chat.get_all_sessions()
 
-current_session = sessions.get(
+current_session = chat.get_session(
     st.session_state.session_id
 )
 
@@ -133,15 +136,19 @@ if current_session:
             f"### 📄 {current_session.title}"
         )
 
+        # st.caption(
+        #     f"Last updated : {current_session.updated_at.strftime('%d %b %Y • %I:%M %p')}"
+        # )
+
         st.caption(
-            f"Last updated : {current_session.updated_at.strftime('%d %b %Y • %I:%M %p')}"
+            f"Last updated : {current_session.updated_at}"
         )
 
 # -------------------------------------------------------
 # Conversation
 # -------------------------------------------------------
 
-history = chat.get_session_history(
+history = chat.get_message_history(
     st.session_state.session_id
 )
 
@@ -184,7 +191,8 @@ Try asking:
                     with st.container(border=True):
                         st.markdown(message["content"])
                 else:
-                    st.markdown(message["content"])
+                    with st.container(border=True):
+                        st.markdown(message["content"])
 
 # -------------------------------------------------------
 # Chat Input

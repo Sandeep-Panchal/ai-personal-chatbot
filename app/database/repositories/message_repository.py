@@ -1,5 +1,6 @@
 import sqlite3
 from app.database.connection import DBConnection
+from app.models.chat_message import ChatMessage
 
 class MessageRepository:
 
@@ -34,7 +35,7 @@ class MessageRepository:
         finally:
             connection.close()
 
-    def fetch_messages_by_session_id(self, session_id: str) -> list[tuple[int, str, str, str, str]]:
+    def fetch_messages_by_session_id(self, session_id: str) -> list[ChatMessage]:
 
         messages_by_session_id_query = """
                 SELECT * FROM messages
@@ -47,9 +48,22 @@ class MessageRepository:
             cursor = connection.cursor()
 
             cursor.execute(messages_by_session_id_query, (session_id,))
-            row = cursor.fetchall()
+            rows = cursor.fetchall()
 
-            return row
+            messages = []
+
+            for row in rows:
+                messages.append(
+                    ChatMessage(
+                        message_id=row[0],
+                        session_id=row[1],
+                        role=row[2],
+                        message=row[3],
+                        created_at=row[4],
+                    )
+                )
+
+            return messages
 
         except sqlite3.Error:
             raise
@@ -57,9 +71,12 @@ class MessageRepository:
         finally:
             connection.close()
         
-    def fetch_all_messages(self)-> list[tuple[int, str, str, str, str]]:
+    def fetch_all_messages(self) -> list[ChatMessage]:
 
-        all_messages_query = """SELECT * FROM messages;"""
+        all_messages_query = """
+                    SELECT * FROM messages
+                    ORDER BY message_id;    
+                """
         
         try:
             connection = DBConnection().get_connection()
@@ -92,8 +109,8 @@ if __name__=="__main__":
     lst = []
     for r in row:
         temp_dic = {}
-        temp_dic["role"] = r[2]
-        temp_dic["content"] = r[3]
+        temp_dic["role"] = r.role
+        temp_dic["content"] = r.content
         lst.append(temp_dic)
 
     print(lst)
