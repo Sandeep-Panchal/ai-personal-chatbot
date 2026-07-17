@@ -40,15 +40,9 @@ chat = st.session_state.chat_service
 
 with st.sidebar:
 
-    st.title("🤖 AI ChatBot")
-
-    st.caption("Personal AI Assistant")
-
-    st.divider()
-
     if st.button(
         "➕ New Chat",
-        use_container_width=True,
+        use_container_width=False,
         type="primary",
     ):
 
@@ -58,9 +52,10 @@ with st.sidebar:
 
         st.rerun()
 
-    st.divider()
+    # st.divider()
 
-    st.subheader("💬 Conversations")
+    # st.subheader("💬 Conversations")
+    st.header("Chats")
 
     sessions = chat.get_all_sessions()
 
@@ -70,16 +65,17 @@ with st.sidebar:
 
             active = session.session_id == st.session_state.session_id
 
-            button_label = (
-                f"🟢 {session.title}"
-                if active
-                else f"💬 {session.title}"
-            )
+            if active:
+                icon = "🟢"
+            else:
+                icon = "🟡"
 
             if st.button(
-                button_label,
+                label=session.title,
                 key=session.session_id,
-                use_container_width=True,
+                use_container_width=False,
+                icon=icon,
+                type="tertiary"
             ):
 
                 st.session_state.session_id = session.session_id
@@ -91,32 +87,18 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("⚙️ Model")
+    st.subheader("⚙️ Model Configuration")
 
-    st.code(settings.llm.model_name)
+    st.write(f"**Provider:** {settings.llm.provider}")
+    st.write(f"**Model:** {settings.llm.model_name}")
+    st.write(f"**Streaming:** {'✅ Enabled' if settings.llm.stream else '❌ Disabled'}")
 
 # -------------------------------------------------------
 # Header
 # -------------------------------------------------------
 
-with st.container(border=True):
-
-    col1, col2 = st.columns([5, 1])
-
-    with col1:
-
-        st.markdown("## 🤖 AI Personal ChatBot")
-
-        st.caption(
-            "Local AI Assistant powered by Ollama"
-        )
-
-    with col2:
-
-        st.metric(
-            "Model",
-            settings.llm.model_name,
-        )
+with st.container(border=False):
+    st.markdown("## 🤖 AI Personal ChatBot")
 
 # -------------------------------------------------------
 # Current Chat Title
@@ -160,20 +142,6 @@ with st.container(border=True):
 
         st.write(
             "Start a conversation with your AI assistant."
-        )
-
-        st.info(
-            """
-Try asking:
-
-• Explain LangGraph
-
-• Help me learn Python
-
-• Summarize a document
-
-• Plan my learning roadmap
-"""
         )
 
     else:

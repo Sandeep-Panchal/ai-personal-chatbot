@@ -13,21 +13,21 @@ class DatabaseInitializer:
         self.connection = self.db.get_connection()
         self.cursor = self.connection.cursor()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
 
         self.cursor.execute(sessions_schema)
         self.cursor.execute(messages_schema)
 
-    def initialize_database(self):
+    def initialize_database(self) -> bool:
 
         try:
             self.create_tables()
 
             self.connection.commit()
-            print("Database initialized successfully.")
+            return True
         
-        except sqlite3.Error as e:
-            print(f"Database initialization failed: {e}")
+        except sqlite3.Error:
+            raise
         
         finally:
             self.connection.close()

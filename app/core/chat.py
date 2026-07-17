@@ -16,7 +16,7 @@ class ChatService:
         self.default_title = "New Chat"
 
     def messages_input_formatting(self, messages_data: list[ChatMessage]) -> list[dict]:
-
+        
         message_history = []
         for tup in messages_data:
 
@@ -62,8 +62,7 @@ class ChatService:
         # Step 7 - Create title if not created
         session_data = self.memory.get_session_by_id(session_id=session_id)
         if session_data.title == self.default_title:
-            messages_data = self.get_message_history(session_id=session_id)
-            history = self.messages_input_formatting(messages_data=messages_data)
+            history = self.get_message_history(session_id=session_id)
 
             title = self.title_service.generate_title(history)
 
@@ -94,36 +93,34 @@ if __name__ == "__main__":
     chat_obj = ChatService()
 
     session_id = session.create_session()
-    # session_id = "9fe5d080-b9da-4165-aa96-17b3e0166b48"
-    session_id = "7cc2621d-d35f-49fe-83ef-c78c236850a8"
 
-    # print(f"Session ID: {session_id}")
+    print(f"Session ID: {session_id}")
 
-    # while True:
+    while True:
 
-    #     user_message = input("You: ")
+        user_message = input("You: ")
 
-    #     if user_message.lower() == "new chat":
-    #         session_id = session.create_session()
-    #         print()
-    #         print("*"*30)
-    #         print("New chat session started...")
-    #         print("*"*30, "\n")
-    #         user_message = input("You: ")
+        if user_message.lower() == "new chat":
+            session_id = session.create_session()
+            print()
+            print("*"*30)
+            print("New chat session started...")
+            print("*"*30, "\n")
+            user_message = input("You: ")
 
-    #     if user_message.lower() == "exit":
-    #         break
+        if user_message.lower() == "exit":
+            break
 
-    #     response = chat_obj.chat(
-    #         session_id=session_id,
-    #         user_message=user_message,
-    #     )
+        response = chat_obj.chat(
+            session_id=session_id,
+            user_message=user_message,
+        )
 
-    #     for chunk in response:
-    #         print(chunk, end="", flush=True)
-    #     print("-"*50)
+        for chunk in response:
+            print(chunk, end="", flush=True)
+        print("-"*50)
 
-    history = chat_obj.get_message_history(session_id)
-    print(history)
+    # history = chat_obj.get_message_history(session_id)
+    # print(history)
 
-    print(type(history))
+    # print(type(history))
