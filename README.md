@@ -2,7 +2,7 @@
 
 A **ChatGPT-like AI Personal Assistant** built from scratch as a long-term learning project.
 
-The objective of this project is not simply to build another chatbot, but to understand the engineering principles behind modern AI assistants. The project is developed incrementally, with each phase introducing new concepts in software architecture, memory management, and AI system design.
+The objective of this project is not simply to build another chatbot, but to understand the engineering principles behind modern AI assistants. The project is developed incrementally, with each phase introducing new concepts in software architecture, memory management, database design, and AI system architecture.
 
 ---
 
@@ -30,6 +30,7 @@ The emphasis is on understanding **why** a design exists before implementing **h
 Build a personal AI assistant capable of:
 
 * Managing multiple chat conversations
+* Persisting conversations across application restarts
 * Remembering information across sessions
 * Maintaining long-term memory
 * Retrieving relevant context automatically
@@ -41,13 +42,23 @@ Build a personal AI assistant capable of:
 
 # Current Features
 
+## ✅ Phase 1 — Foundation
+
 * Interactive chat interface using Streamlit
 * Local LLM integration with Ollama
 * Streaming AI responses
 * Multiple chat sessions
 * Session isolation
-* In-memory conversation history
-* Modular and layered project architecture
+
+## ✅ Phase 2 — Persistent Conversation Memory
+
+* SQLite database integration
+* Persistent chat sessions
+* Persistent conversation history
+* Repository pattern for database access
+* Database initialization and schema management
+* Conversation title generation
+* Layered architecture (UI → Service → Memory → Repository → Database)
 
 ---
 
@@ -57,6 +68,7 @@ Build a personal AI assistant capable of:
 | -------------- | ---------- |
 | Language       | Python     |
 | User Interface | Streamlit  |
+| Database       | SQLite     |
 | LLM Runtime    | Ollama     |
 
 ---
@@ -94,23 +106,23 @@ Clone the repository:
 git clone <repository-url>
 cd AI-Personal-ChatBot
 ```
+
 Set up the project environment and install dependencies:
 
 ```bash
 uv sync
 ```
+
 ---
 
 # Running the Application
 
 Ensure that:
 
-- Ollama is installed and running.
-- The configured model has been downloaded.
+* Ollama is installed and running.
+* The configured model has been downloaded.
 
-Start the application:
-
-From the project root directory, run:
+Start the application from the project root directory:
 
 ```bash
 uv run python -m streamlit run app/ui/streamlit_app.py
@@ -122,11 +134,47 @@ Open the URL displayed by Streamlit in your browser.
 
 # Project Status
 
-**Current Phase**
+## Current Version
 
-✅ **Phase 1 — Foundation**
+**v0.2.0**
 
-This phase establishes the foundational architecture, including conversation flow, session management, and in-memory conversation history.
+## Completed
+
+### ✅ Phase 1 — Foundation
+
+Established the core chatbot architecture, including:
+
+* Streamlit-based chat interface
+* Ollama integration
+* Session management
+* Multi-chat support
+* In-memory conversation management
+
+### ✅ Phase 2 — Persistent Conversation Memory
+
+Introduced persistent storage and database architecture, including:
+
+* SQLite integration
+* Persistent session storage
+* Persistent message history
+* Repository pattern
+* Database initialization
+* Conversation title generation
+* Separation of business logic and persistence layer
+
+---
+
+## 🚧 Next Phase
+
+### Phase 3 — Memory Management
+
+Upcoming work includes:
+
+* Conversation summarization
+* Context compression
+* Long-term memory
+* Context builder
+* Intelligent prompt construction
 
 ---
 
@@ -136,7 +184,7 @@ This phase establishes the foundational architecture, including conversation flo
 | ---------------------- | ---------------------------------- |
 | `README.md`            | Project overview and setup guide   |
 | `docs/CHANGELOG.md`    | Release history                    |
-| `docs/roadmap.md`      | Current development roadmap        |
+| `docs/roadmap.md`      | Development roadmap                |
 | `docs/architecture.md` | Current system architecture        |
 | `docs/phases/`         | Documentation for completed phases |
 
@@ -151,10 +199,11 @@ This project follows a few guiding principles:
 * Incremental development
 * Clear separation of concerns
 * Modular architecture
+* Design for future scalability
 * Document important design decisions
 * Complete one phase before starting the next
 
-Each phase represents a stable milestone before moving on to additional functionality.
+Each phase represents a stable milestone before introducing more advanced capabilities.
 
 ---
 
