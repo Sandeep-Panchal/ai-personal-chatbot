@@ -153,6 +153,28 @@ class SessionRepository:
         finally:
             connection.close()
 
+    def delete_session(self, session_id: str) -> bool:
+
+        delete_session_query = """
+                        DELETE FROM sessions
+                        WHERE session_id = ?;
+                    """
+
+        try:
+            connection = DBConnection().get_connection()
+            cursor = connection.cursor()
+
+            cursor.execute(delete_session_query, (session_id,))
+            connection.commit()
+
+            return True
+
+        except sqlite3.Error:
+            raise
+
+        finally:
+            connection.close()
+
 
 if __name__=="__main__":
 

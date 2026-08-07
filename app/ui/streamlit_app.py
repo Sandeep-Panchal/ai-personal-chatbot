@@ -32,6 +32,9 @@ if "session_id" not in st.session_state:
         st.session_state.session_manager.create_session()
     )
 
+if "delete_session" not in st.session_state:
+    st.session_state.delete_session = None
+
 chat = st.session_state.chat_service
 
 # -------------------------------------------------------
@@ -65,21 +68,33 @@ with st.sidebar:
 
             active = session.session_id == st.session_state.session_id
 
-            if active:
-                icon = "🟢"
-            else:
-                icon = "🟡"
+            icon = "🟢" if active else "🟡"
 
-            if st.button(
-                label=session.title,
-                key=session.session_id,
-                use_container_width=False,
-                icon=icon,
-                type="tertiary"
-            ):
+            col1, col2 = st.columns([9, 2])
 
-                st.session_state.session_id = session.session_id
-                st.rerun()
+            with col1:
+
+                if st.button(
+                    session.title,
+                    key=f"chat_{session.session_id}",
+                    icon=icon,
+                    use_container_width=False,
+                    type="tertiary",
+                ):
+                    st.session_state.session_id = session.session_id
+                    st.rerun()
+
+            with col2:
+
+                with st.popover("⋮"):
+
+                    if st.button(
+                        "🗑 Delete Chat",
+                        key=f"delete_{session.session_id}",
+                        use_container_width=True,
+                    ):
+                        st.session_state.delete_session = session.session_id
+                        st.rerun()
 
     else:
 
@@ -92,6 +107,55 @@ with st.sidebar:
     st.write(f"**Provider:** {settings.llm.provider}")
     st.write(f"**Model:** {settings.llm.model_name}")
     st.write(f"**Streaming:** {'✅ Enabled' if settings.llm.stream else '❌ Disabled'}")
+
+if st.session_state.delete_session:
+
+    session = chat.get_session(st.session_state.delete_session)
+
+    @st.dialog("🗑 Delete Chat")
+    def confirm_delete():
+
+        st.write("This will permanently delete the following chat:")
+
+        st.info(f"**{session.title}**")
+
+        st.caption("This action cannot be undone.")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+
+            if st.button(
+                "Cancel",
+                use_container_width=True,
+            ):
+                st.session_state.delete_session = None
+                st.rerun()
+
+        with col2:
+
+            if st.button(
+                "Delete",
+                type="primary",
+                use_container_width=True,
+            ):
+
+                chat.delete_chat(session.session_id)
+
+                st.session_state.delete_session = None
+
+                sessions = chat.get_all_sessions()
+
+                if sessions:
+                    st.session_state.session_id = sessions[0].session_id
+                else:
+                    st.session_state.session_id = (
+                        st.session_state.session_manager.create_session()
+                    )
+
+                st.rerun()
+
+    confirm_delete()
 
 # -------------------------------------------------------
 # Header
@@ -178,19 +242,37 @@ if prompt := st.chat_input(
         st.markdown(prompt)
 
     with st.chat_message(
-        "assistant",
-        avatar="🤖",
-    ):
+                "assistant",
+                avatar="🤖",
+            ):
 
-        with st.spinner("Thinking..."):
+        status = st.empty()
+        response = st.empty()
 
-            st.write_stream(
+        # Initial status
+        status.info("🤔 Thinking...")
 
-                chat.chat(
-                    session_id=st.session_state.session_id,
-                    user_message=prompt,
-                )
+        full_response = ""
+        first_chunk = True
 
-            )
+        for chunk in chat.chat(
+            session_id=st.session_state.session_id,
+            user_message=prompt,
+        ):
+
+            # First token received
+            if first_chunk:
+                # status.info("⚡ Generating response...")
+                status.info("✍️ Generating response...")
+                first_chunk = False
+
+            full_response += chunk
+            response.markdown(full_response + "▌")
+
+        # Final response
+        response.markdown(full_response)
+
+        # Remove status
+        status.empty()
 
     st.rerun()
