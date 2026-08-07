@@ -16,42 +16,64 @@ Streamlit UI
 ChatService
    │
    ▼
-MemoryManager
+SessionMemory
    │
-   ├─────────────────────────────┐
-   ▼                             ▼
-SessionRepository         MessageRepository
-   │                             │
-   └──────────────┬──────────────┘
-                  ▼
-               SQLite
-                  │
-                  ▼
-            Conversation Data
-                  │
-                  ▼
-             MemoryManager
-                  │
-                  ▼
-             OllamaClient
-                  │
-                  ▼
-               Local LLM
-                  │
-                  ▼
-          Streaming Response
-                  │
-                  ▼
-             MemoryManager
-                  │
-                  ▼
-          MessageRepository
-                  │
-                  ▼
-                SQLite
-                  │
-                  ▼
-            Streamlit UI
+   ▼
+SessionRepository
+   │
+   ▼
+SQLite
+   │
+   ▲
+MessageMemory
+   │
+   ▼
+MessageRepository
+   │
+   ▼
+SQLite
+   │
+   ▼
+Conversation History
+   │
+   ▼
+OllamaClient
+   │
+   ▼
+Local LLM
+   │
+   ▼
+Streaming Response
+   │
+   ▼
+MessageMemory
+   │
+   ▼
+MessageRepository
+   │
+   ▼
+SQLite
+   │
+   ▼
+SummaryMemory
+   │
+   ▼
+SummaryAgent
+   │
+   ▼
+OllamaClient
+   │
+   ▼
+Local LLM
+   │
+   ▼
+SummaryRepository
+   │
+   ▼
+SQLite
+   │
+   ▼
+Streamlit UI
 ```
 
 ---
@@ -62,10 +84,10 @@ SessionRepository         MessageRepository
 
 Responsible for:
 
-* User interaction
-* Managing chat sessions
-* Displaying conversation history
-* Streaming AI responses
+- User interaction
+- Managing chat sessions
+- Displaying conversation history
+- Streaming AI responses
 
 ---
 
@@ -75,78 +97,148 @@ Acts as the orchestration layer of the application.
 
 Responsibilities:
 
-* Receive user messages
-* Coordinate conversation flow
-* Retrieve conversation history
-* Format messages for the LLM
-* Stream responses from the LLM
-* Generate conversation titles
-* Delegate persistence to the MemoryManager
+- Receive user messages
+- Coordinate conversation flow
+- Store user messages
+- Retrieve conversation history
+- Format messages for the LLM
+- Stream AI responses
+- Store assistant responses
+- Trigger conversation summarization
+- Generate conversation titles
+
+The ChatService contains no database logic.
 
 ---
 
-## MemoryManager
+# Memory Layer
 
-Acts as the application's memory abstraction layer.
+The memory layer manages all conversation-related data.
 
-Responsibilities:
-
-* Create and manage chat sessions
-* Store user and assistant messages
-* Retrieve conversation history
-* Update conversation metadata
-* Coordinate communication with the repository layer
-
-The MemoryManager contains business logic and is independent of the underlying database implementation.
+It is divided into specialized components.
 
 ---
 
-## Repository Layer
-
-Responsible for all database operations.
-
-### SessionRepository
+## SessionMemory
 
 Responsibilities:
 
-* Create sessions
-* Retrieve sessions
-* Update session information
-
-### MessageRepository
-
-Responsibilities:
-
-* Store messages
-* Retrieve conversation history
-* Retrieve messages for a specific session
-
-Repositories isolate database access from the business logic.
+- Create chat sessions
+- Retrieve sessions
+- Update session metadata
+- Update conversation titles
 
 ---
 
-## SQLite Database
+## MessageMemory
+
+Responsibilities:
+
+- Store user messages
+- Store assistant messages
+- Retrieve complete conversation history
+- Retrieve message ranges for summarization
+- Retrieve recent conversation messages
+
+---
+
+## SummaryMemory
+
+Responsibilities:
+
+- Determine when conversation summarization should occur
+- Retrieve the latest conversation summary
+- Retrieve conversation segments
+- Coordinate summary generation
+- Persist updated summaries
+
+SummaryMemory contains business logic but no prompt engineering.
+
+---
+
+## SummaryAgent
+
+Responsible for:
+
+- Formatting conversation history
+- Building summarization prompts
+- Calling the LLM
+- Returning an updated conversation summary
+
+The SummaryAgent is responsible only for LLM interaction and contains no database logic.
+
+---
+
+# Repository Layer
+
+Repositories isolate database access from business logic.
+
+## SessionRepository
+
+Responsibilities:
+
+- Create sessions
+- Retrieve sessions
+- Update session information
+
+---
+
+## MessageRepository
+
+Responsibilities:
+
+- Store messages
+- Retrieve conversation history
+- Retrieve recent messages
+- Retrieve message ranges
+- Count conversation messages
+
+---
+
+## SummaryRepository
+
+Responsibilities:
+
+- Store conversation summaries
+- Retrieve the latest conversation summary
+
+---
+
+# SQLite Database
 
 Responsible for persistent storage.
 
-Current schema:
+Current schema consists of three tables.
 
-### Sessions
+## Sessions
 
-* Session ID
-* Conversation title
-* Created timestamp
-* Updated timestamp
+- Session ID
+- Conversation title
+- Created timestamp
+- Updated timestamp
 
-### Messages
+---
 
-* Message ID
-* Session ID
-* Role (User / Assistant / System)
-* Message content
-* Created timestamp
+## Messages
 
-Conversation history is now preserved across application restarts.
+- Message ID
+- Session ID
+- Role (User / Assistant / System)
+- Message content
+- Created timestamp
+
+---
+
+## Summary
+
+- Summary ID
+- Session ID
+- Summary Version
+- Conversation summary
+- Covers until message number
+- Created timestamp
+
+Conversation history and conversation summaries are preserved across application restarts.
 
 ---
 
@@ -154,60 +246,84 @@ Conversation history is now preserved across application restarts.
 
 Responsible for:
 
-* Communicating with the local Ollama server
-* Streaming model responses
-* Abstracting LLM interaction from business logic
+- Communicating with the local Ollama server
+- Streaming model responses
+- Generating conversation summaries
+- Abstracting LLM interaction from the application
 
 ---
 
 # Current Architecture
 
-```
-User
-   │
-   ▼
-Streamlit UI
-   │
-   ▼
-ChatService
-   │
-   ▼
-MemoryManager
-   │
-   ▼
-Repositories
-   │
-   ▼
-SQLite
-   │
-   ▼
-OllamaClient
-   │
-   ▼
-Local LLM
+```text
+                 User
+                   │
+                   ▼
+             Streamlit UI
+                   │
+                   ▼
+              ChatService
+                   │
+        ┌──────────┴──────────┐
+        ▼                     ▼
+ SessionMemory          MessageMemory
+        │                     │
+        ▼                     ▼
+SessionRepository     MessageRepository
+        │                     │
+        └──────────┬──────────┘
+                   ▼
+                SQLite
+                   │
+                   ▼
+            Conversation History
+                   │
+                   ▼
+              OllamaClient
+                   │
+                   ▼
+               Local LLM
+                   │
+                   ▼
+           Assistant Response
+                   │
+                   ▼
+             SummaryMemory
+                   │
+                   ▼
+             SummaryAgent
+                   │
+                   ▼
+              OllamaClient
+                   │
+                   ▼
+               Local LLM
+                   │
+                   ▼
+           SummaryRepository
+                   │
+                   ▼
+                SQLite
 ```
 
 ---
 
 # Current Limitations
 
-The application currently sends the **entire conversation history** to the LLM for every request.
+The application now supports **rolling conversation summarization** to reduce prompt growth.
 
-As conversations grow:
-
-* Token usage increases.
-* Response latency increases.
-* Context windows become limited.
+The memory system is still under development.
 
 The current implementation does not yet support:
 
-* Conversation summarization
-* Context compression
-* Episodic memory
-* Semantic memory
-* Procedural memory
-* Long-term memory
-* Semantic retrieval
-* Vector database integration
+- Context builder
+- Semantic memory
+- Episodic memory
+- Procedural memory
+- Long-term memory retrieval
+- Memory ranking
+- Retrieval-Augmented Generation (RAG)
+- Vector database integration
+- Agentic workflows
 
-These capabilities are planned for **Phase 3 — Memory Management**.
+These capabilities are planned for the subsequent phases.

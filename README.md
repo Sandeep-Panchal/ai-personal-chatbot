@@ -79,7 +79,18 @@ Build a personal AI assistant capable of:
 AI-Personal-ChatBot/
 │
 ├── app/                # Application source code
-├── docs/               # Project documentation
+    ├── agents/
+    ├── core/
+    ├── database/
+    ├── llm/
+    ├── memory/
+    ├── models/
+    ├── prompts/
+    ├── ui/
+    ├── utils/
+├──config.py
+├── docs/   
+├── ipynb/            # Project documentation
 ├── pyproject.toml      # Project configuration and dependencies
 ├── uv.lock             # Locked dependency versions
 └── README.md
@@ -164,17 +175,26 @@ Introduced persistent storage and database architecture, including:
 
 ---
 
-## 🚧 Next Phase
+## 🚧 Current Phase
 
-### Phase 3 — Memory Management
+### Phase 3 — Memory Management (In Progress)
 
-Upcoming work includes:
+#### Completed
 
-* Conversation summarization
-* Context compression
-* Long-term memory
-* Context builder
-* Intelligent prompt construction
+- Rolling conversation summarization
+- Summary versioning
+- Persistent conversation summaries
+- Configurable summarization thresholds
+- Summary Agent
+- Summary Memory layer
+
+#### Upcoming
+
+- Context builder
+- Semantic memory
+- Episodic memory
+- Long-term memory retrieval
+- Intelligent prompt construction
 
 ---
 

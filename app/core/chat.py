@@ -1,17 +1,25 @@
-from app.core.memory import MemoryManager
 from app.llm.ollama_call import OllamaClient
-from app.services.title_service import TitleService
+
+from app.memory.session_memory import SessionMemory
+from app.memory.message_memory import MessageMemory
+from app.memory.summary_memory import SummaryMemory
+
+from app.agents.title_agent import TitleAgent
+
 from app.models.chat_session import ChatSession
 from app.models.chat_message import ChatMessage
+
 from typing import Generator
 
 class ChatService:
 
     def __init__(self):
 
-        self.memory = MemoryManager()
         self.ollama = OllamaClient()
-        self.title_service = TitleService(self.ollama.client)
+        self.session_memory = SessionMemory()
+        self.message_memory = MessageMemory()
+        self.summary_memory = SummaryMemory(self.ollama.client)
+        self.title_agent = TitleAgent(self.ollama.client)
 
         self.default_title = "New Chat"
 
@@ -34,10 +42,10 @@ class ChatService:
     ) -> Generator[str, None, None]:
 
         # Step 1 - Store session
-        self.memory.add_session(session_id=session_id)
+        self.session_memory.add_session(session_id=session_id)
 
         # Step 2 - Store user message
-        self.memory.add_user_message(
+        self.message_memory.add_user_message(
             session_id=session_id,
             message=user_message,
         )
@@ -54,73 +62,78 @@ class ChatService:
         ai_message = "".join(chunks)
 
         # Step 5 - Store AI response
-        self.memory.add_ai_message(
+        self.message_memory.add_ai_message(
             session_id=session_id,
             message=ai_message.strip(),
         )
 
-        # Step 7 - Create title if not created
-        session_data = self.memory.get_session_by_id(session_id=session_id)
+        # Step 6 - Create title if not created
+        session_data = self.get_session(session_id=session_id)
+                    
         if session_data.title == self.default_title:
             history = self.get_message_history(session_id=session_id)
 
-            title = self.title_service.generate_title(history)
+            title = self.title_agent.generate_title(history)
 
-            self.memory.update_title(
+            self.session_memory.update_session_title(
                 title=title,
                 session_id=session_id
             )
+
+        # Step 7 - call update summary to add summary periodically
+        self.summary_memory.update_summary(session_id=session_id)
     
     def get_message_history(self, session_id: str) -> None:
         
-        messages_data = self.memory.get_message_history(session_id)
+        messages_data = self.message_memory.get_message_history(session_id)
         history = self.messages_input_formatting(messages_data=messages_data)
         return history
     
     def get_session(self, session_id: str) -> ChatSession | None:
 
-        return self.memory.get_session_by_id(session_id=session_id)
+        return self.session_memory.get_session_by_id(session_id=session_id)
 
     def get_all_sessions(self) -> list[ChatSession]:
 
-        return self.memory.get_all_sessions()
+        return self.session_memory.get_all_sessions()
 
 if __name__ == "__main__":
 
-    from app.core.session import SessionManager
+    pass
+    # from app.core.session import SessionManager
 
-    session = SessionManager()
-    chat_obj = ChatService()
+    # session = SessionManager()
+    # chat_obj = ChatService()
 
-    session_id = session.create_session()
+    # session_id = session.create_session()
 
-    print(f"Session ID: {session_id}")
+    # print(f"Session ID: {session_id}")
 
-    while True:
+    # while True:
 
-        user_message = input("You: ")
+    #     user_message = input("You: ")
 
-        if user_message.lower() == "new chat":
-            session_id = session.create_session()
-            print()
-            print("*"*30)
-            print("New chat session started...")
-            print("*"*30, "\n")
-            user_message = input("You: ")
+    #     if user_message.lower() == "new chat":
+    #         session_id = session.create_session()
+    #         print()
+    #         print("*"*30)
+    #         print("New chat session started...")
+    #         print("*"*30, "\n")
+    #         user_message = input("You: ")
 
-        if user_message.lower() == "exit":
-            break
+    #     if user_message.lower() == "exit":
+    #         break
 
-        response = chat_obj.chat(
-            session_id=session_id,
-            user_message=user_message,
-        )
+    #     response = chat_obj.chat(
+    #         session_id=session_id,
+    #         user_message=user_message,
+    #     )
 
-        for chunk in response:
-            print(chunk, end="", flush=True)
-        print("-"*50)
+    #     for chunk in response:
+    #         print(chunk, end="", flush=True)
+    #     print("-"*50)
 
-    # history = chat_obj.get_message_history(session_id)
-    # print(history)
+    # # history = chat_obj.get_message_history(session_id)
+    # # print(history)
 
-    # print(type(history))
+    # # print(type(history))

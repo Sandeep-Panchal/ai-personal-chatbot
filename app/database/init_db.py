@@ -3,6 +3,7 @@ from app.database.connection import DBConnection
 from app.database.schema import (
     sessions_schema,
     messages_schema,
+    summary_schema
 )
 
 class DatabaseInitializer:
@@ -17,6 +18,7 @@ class DatabaseInitializer:
 
         self.cursor.execute(sessions_schema)
         self.cursor.execute(messages_schema)
+        self.cursor.execute(summary_schema)
 
     def initialize_database(self) -> bool:
 
