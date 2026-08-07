@@ -97,6 +97,10 @@ class ChatService:
 
         return self.session_memory.get_all_sessions()
 
+    def delete_chat(self,session_id: str,) -> None:
+
+        self.session_memory.delete_session(session_id)
+
 if __name__ == "__main__":
 
     pass

@@ -38,6 +38,10 @@ class SessionMemory:
         
         self.session_repo.update_session_title(title, session_id)
 
+    def delete_session(self, session_id: str) -> None:
+
+        self.session_repo.delete_session(session_id)
+
 if __name__=="__main__":
     pass
     # # from app.llm.ollama_call import OllamaClient

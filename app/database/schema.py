@@ -23,6 +23,7 @@ messages_schema = """
 
             FOREIGN KEY (session_id)
                 REFERENCES sessions(session_id)
+                ON DELETE CASCADE
         );
     """
 
@@ -36,8 +37,9 @@ summary_schema = """
             messages_summary TEXT NOT NULL,
             covers_until_message_id INTEGER NOT NULL,
             created_at TEXT NOT NULL,
-            
-            FOREIGN KEY(session_id)
+
+            FOREIGN KEY (session_id)
                 REFERENCES sessions(session_id)
+                ON DELETE CASCADE
     );
         """
