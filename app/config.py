@@ -21,10 +21,19 @@ class LLMSettings(BaseModel):
         le=2.0
     )
 
+class SummarySettings(BaseModel):
+    STEP_THRESHOLD: int = 10
+    KEEP_LAST_MESSAGES: int = 2
+
+    @property
+    def NEXT_MESSAGES_COUNT(self) -> int:
+        return self.STEP_THRESHOLD - self.KEEP_LAST_MESSAGES
+
 class Settings(BaseSettings):
 
     app: ApplicationSettings = ApplicationSettings()
     llm: LLMSettings = LLMSettings()
+    summary_settings: SummarySettings = SummarySettings()
 
 settings = Settings()
     

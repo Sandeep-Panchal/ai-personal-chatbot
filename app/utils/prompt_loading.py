@@ -4,8 +4,9 @@ class PromptLoading:
     
     def __init__(self):
         
-        self.SYSTEM_PROMPT = "chat_system.txt"
-        self.TITLE_PROMPT = "chat_title.txt"
+        self.CHAT_SYSTEM_PROMPT = "chat_system_prompt.txt"
+        self.TITLE_PROMPT = "title_prompt.txt"
+        self.SUMMARY_PROMPT = "summary_prompt.txt"
 
     def load_prompt(self, filename: Path) -> str:
 

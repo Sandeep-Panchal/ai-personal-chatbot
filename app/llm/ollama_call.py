@@ -12,7 +12,7 @@ class OllamaClient:
     def ollama_chat(self, history):
 
         self.system_prompt = self.prompt_loader.load_prompt(
-            self.prompt_loader.SYSTEM_PROMPT
+            self.prompt_loader.CHAT_SYSTEM_PROMPT
             )
 
         messages = [
