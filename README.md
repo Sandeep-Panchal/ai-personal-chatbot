@@ -2,7 +2,7 @@
 
 A **ChatGPT-like AI Personal Assistant** built from scratch as a long-term learning project.
 
-The objective of this project is not simply to build another chatbot, but to understand the engineering principles behind modern AI assistants. The project is developed incrementally, with each phase introducing new concepts in software architecture, memory management, database design, and AI system architecture.
+The objective of this project is not simply to build another chatbot, but to understand the engineering principles behind modern AI assistants. The project is developed incrementally, with each phase introducing new concepts in software architecture, memory management, database design, context engineering, and AI system architecture.
 
 ---
 
@@ -10,16 +10,16 @@ The objective of this project is not simply to build another chatbot, but to und
 
 This project focuses on learning and implementing:
 
-* Software Architecture
-* AI System Design
-* Conversation Management
-* Memory Management
-* Database Design
-* Context Engineering
-* Retrieval-Augmented Generation (RAG)
-* Long-Term Memory
-* Agentic Workflows
-* Scalable AI Application Design
+- Software Architecture
+- AI System Design
+- Conversation Management
+- Memory Management
+- Database Design
+- Context Engineering
+- Retrieval-Augmented Generation (RAG)
+- Long-Term Memory
+- Agentic Workflows
+- Scalable AI Application Design
 
 The emphasis is on understanding **why** a design exists before implementing **how** it works.
 
@@ -29,14 +29,14 @@ The emphasis is on understanding **why** a design exists before implementing **h
 
 Build a personal AI assistant capable of:
 
-* Managing multiple chat conversations
-* Persisting conversations across application restarts
-* Remembering information across sessions
-* Maintaining long-term memory
-* Retrieving relevant context automatically
-* Answering questions from uploaded documents
-* Supporting agentic workflows
-* Following production-quality software engineering practices
+- Managing multiple chat conversations
+- Persisting conversations across application restarts
+- Remembering information across sessions
+- Maintaining long-term memory
+- Retrieving relevant context automatically
+- Answering questions from uploaded documents
+- Supporting agentic workflows
+- Following production-quality software engineering practices
 
 ---
 
@@ -44,25 +44,50 @@ Build a personal AI assistant capable of:
 
 ## ✅ Phase 1 — Foundation
 
-* Interactive chat interface using Streamlit
-* Local LLM integration with Ollama
-* Streaming AI responses
-* Multiple chat sessions
-* Session isolation
+- Interactive chat interface using Streamlit
+- Local LLM integration with Ollama
+- Streaming AI responses
+- Multiple chat sessions
+- Session isolation
+- In-memory conversation management
 
 ## ✅ Phase 2 — Persistent Conversation Memory
 
-* SQLite database integration
-* Persistent chat sessions
-* Persistent conversation history
-* Repository pattern for database access
-* Database initialization and schema management
-* Conversation title generation
-* Layered architecture (UI → Service → Memory → Repository → Database)
+- SQLite database integration
+- Persistent chat sessions
+- Persistent conversation history
+- Repository pattern for database access
+- Database initialization and schema management
+- Conversation title generation
+- Layered architecture
+  - UI
+  - Service
+  - Memory
+  - Repository
+  - Database
+
+## ✅ Phase 3 — Conversation Summary
+
+- Rolling conversation summarization
+- Persistent conversation summaries
+- Summary versioning
+- Summary coverage tracking
+- Configurable summarization thresholds
+- Summary Agent
+- Summary Memory layer
+- Previous summary + new conversation summarization
+- Context compression for long conversations
+- Delete chat functionality
+- Delete confirmation dialog
+- Improved response generation UX
+  - Thinking state
+  - Generating state
+  - Streaming response
 
 ---
 
 # Technology Stack
+```text
 
 | Category       | Technology |
 | -------------- | ---------- |
@@ -70,7 +95,7 @@ Build a personal AI assistant capable of:
 | User Interface | Streamlit  |
 | Database       | SQLite     |
 | LLM Runtime    | Ollama     |
-
+```
 ---
 
 # Repository Structure
@@ -78,21 +103,26 @@ Build a personal AI assistant capable of:
 ```text
 AI-Personal-ChatBot/
 │
-├── app/                # Application source code
-    ├── agents/
-    ├── core/
-    ├── database/
-    ├── llm/
-    ├── memory/
-    ├── models/
-    ├── prompts/
-    ├── ui/
-    ├── utils/
-├──config.py
-├── docs/   
-├── ipynb/            # Project documentation
-├── pyproject.toml      # Project configuration and dependencies
-├── uv.lock             # Locked dependency versions
+├── app/
+│   ├── agents/
+│   ├── core/
+│   ├── database/
+│   ├── llm/
+│   ├── memory/
+│   ├── models/
+│   ├── prompts/
+│   ├── ui/
+│   └── utils/
+│
+├── docs/
+│   ├── phases/
+│   ├── architecture.md
+│   ├── CHANGELOG.md
+│   └── roadmap.md
+│
+├── ipynb/
+├── pyproject.toml
+├── uv.lock
 └── README.md
 ```
 
@@ -147,7 +177,7 @@ Open the URL displayed by Streamlit in your browser.
 
 ## Current Version
 
-**v0.2.0**
+**v0.3.0**
 
 ## Completed
 
@@ -173,23 +203,26 @@ Introduced persistent storage and database architecture, including:
 * Conversation title generation
 * Separation of business logic and persistence layer
 
+### ✅ Phase 3 — Conversation Summary
+
+Introduced conversation summarization to prevent the complete conversation history from being sent to the LLM for every request.
+Implemented rolling conversation summarization based on configurable thresholds.
+
+The application:
+
+* Tracks the number of messages in a conversation.
+* Determines when the summarization threshold is reached.
+* Identifies the conversation segment that should be summarized.
+* Generates a summary using the Summary Agent.
+* Persists the generated summary in SQLite.
+* Tracks which messages are covered by the summary.
+* Uses the summary together with recent messages for future context.
+
 ---
-
-## 🚧 Current Phase
-
-### Phase 3 — Memory Management (In Progress)
-
-#### Completed
-
-- Rolling conversation summarization
-- Summary versioning
-- Persistent conversation summaries
-- Configurable summarization thresholds
-- Summary Agent
-- Summary Memory layer
 
 #### Upcoming
 
+- RAG
 - Context builder
 - Semantic memory
 - Episodic memory
