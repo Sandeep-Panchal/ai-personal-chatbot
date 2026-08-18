@@ -17,14 +17,11 @@ session = SessionManager()
 fapp = FastAPI()
 
 @fapp.post("/api/chat", response_model=ChatOutputSchema)
-def chat_api(
-    session_id: SessionIDSchema,
-    user_query: ChatInputSchema
-    ):
+def chat_api(data: ChatInputSchema):
 
     response = chat.chat(
-        session_id=session_id.session_id,
-        user_message=user_query.query,
+        session_id=data.session_id,
+        user_message=data.query,
         )
     response_text = "".join(response)
 

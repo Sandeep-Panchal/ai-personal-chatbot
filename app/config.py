@@ -29,9 +29,10 @@ class SummarySettings(BaseModel):
     def NEXT_MESSAGES_COUNT(self) -> int:
         return self.STEP_THRESHOLD - self.KEEP_LAST_MESSAGES
 
-class ChatAPISettings(BaseModel):
+class APISettings(BaseModel):
 
-    url: str = "http://127.0.0.1:8000/api/chat"
+    chat_url: str = "http://127.0.0.1:8000/api/chat"
+    session_url: str = "http://127.0.0.1:8000/api/sessions"
     headers: dict = {
         'Content-Type': 'application/json'
         }
@@ -41,7 +42,7 @@ class Settings(BaseSettings):
     app: ApplicationSettings = ApplicationSettings()
     llm: LLMSettings = LLMSettings()
     summary_settings: SummarySettings = SummarySettings()
-    chat_api_settings: ChatAPISettings = ChatAPISettings()
+    api_settings: APISettings = APISettings()
 
 settings = Settings()
     
