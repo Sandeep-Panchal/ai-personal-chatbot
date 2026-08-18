@@ -83,7 +83,7 @@ class ChatService:
         # Step 7 - call update summary to add summary periodically
         self.summary_memory.update_summary(session_id=session_id)
     
-    def get_message_history(self, session_id: str) -> None:
+    def get_message_history(self, session_id: str) -> list[dict]:
         
         messages_data = self.message_memory.get_message_history(session_id)
         history = self.messages_input_formatting(messages_data=messages_data)

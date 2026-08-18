@@ -9,5 +9,6 @@ dependencies = [
     "streamlit>=1.40.1",
     "langchain",
     "langchain_community",
-    "pyyaml"
+    "pyyaml",
+    "fastapi[standard]>=0.141.1",
 ]
