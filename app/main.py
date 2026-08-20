@@ -16,16 +16,36 @@ session = SessionManager()
 # Creating an instance of FastAPI
 fapp = FastAPI()
 
+# @fapp.post("/api/chat", response_model=ChatOutputSchema)
+# def chat_api(data: ChatInputSchema):
+
+#     response = chat.chat(
+#         session_id=data.session_id,
+#         user_message=data.query,
+#         )
+#     response_text = "".join(response)
+
+#     return {"llm_response": response_text}
+
 @fapp.post("/api/chat", response_model=ChatOutputSchema)
 def chat_api(data: ChatInputSchema):
 
+    session_id = data.session_id
+
+    if session_id is None:
+        session_id = session.create_session()
+
     response = chat.chat(
-        session_id=data.session_id,
+        session_id=session_id,
         user_message=data.query,
-        )
+    )
+
     response_text = "".join(response)
 
-    return {"llm_response": response_text}
+    return {
+        "session_id": session_id,
+        "llm_response": response_text,
+    }
 
 @fapp.post("/api/sessions", response_model=SessionIDSchema)
 def create_session():

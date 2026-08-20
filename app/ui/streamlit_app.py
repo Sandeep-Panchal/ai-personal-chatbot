@@ -3,6 +3,7 @@ DatabaseInitializer().initialize_database()
 
 import streamlit as st
 import requests
+from datetime import datetime
 
 from app.config import settings
 
@@ -26,9 +27,7 @@ headers = settings.api_settings.headers
 # -------------------------------------------------------
 
 if "session_id" not in st.session_state:
-    response = requests.post(session_url, headers=headers)
-    resp_json = response.json()
-    st.session_state.session_id = resp_json["session_id"]
+    st.session_state.session_id = None
 
 if "delete_session" not in st.session_state:
     st.session_state.delete_session = None
@@ -39,15 +38,16 @@ if "delete_session" not in st.session_state:
 
 with st.sidebar:
 
+    with st.container(border=False):
+        st.markdown("## 🤖 AI Personal ChatBot")
+        
     if st.button(
         "➕ New Chat",
         use_container_width=False,
         type="primary",
     ):
 
-        response = requests.post(session_url, headers=headers)
-        resp_json = response.json()
-        st.session_state.session_id = resp_json["session_id"]
+        st.session_state.session_id = None
 
         st.rerun()
 
@@ -103,16 +103,17 @@ with st.sidebar:
     st.write(f"**Streaming:** {'✅ Enabled' if settings.llm.stream else '❌ Disabled'}")
 
 if st.session_state.delete_session:
-    get_session_url = f"{session_url}/{st.session_state.delete_session}"
+    delete_session_id = st.session_state.delete_session
+    get_session_url = f"{session_url}/{delete_session_id}"
     response = requests.get(get_session_url, headers=headers)
-    session = response.json()
+    delete_session = response.json()
 
     @st.dialog("🗑 Delete Chat")
     def confirm_delete():
 
         st.write("This will permanently delete the following chat:")
 
-        st.info(f"**{session['title']}**")
+        st.info(f"**{delete_session['title']}**")
 
         st.caption("This action cannot be undone.")
 
@@ -136,7 +137,7 @@ if st.session_state.delete_session:
             ):
 
                 # delete_session_url = f"{session_url}/{session['session_id']}"
-                delete_session_url = f"{session_url}/{st.session_state.delete_session}"
+                delete_session_url = f"{session_url}/{delete_session_id}"
                 requests.delete(delete_session_url, headers=headers)
 
                 st.session_state.delete_session = None
@@ -147,9 +148,8 @@ if st.session_state.delete_session:
                 if sessions:
                     st.session_state.session_id = sessions[0]["session_id"]
                 else:
-                    response = requests.post(session_url, headers=headers)
-                    session = response.json()
-                    st.session_state.session_id = session["session_id"]
+                    # No persisted conversations remain
+                    st.session_state.session_id = None
 
                 st.rerun()
 
@@ -159,35 +159,37 @@ if st.session_state.delete_session:
 # Header
 # -------------------------------------------------------
 
-with st.container(border=False):
-    st.markdown("## 🤖 AI Personal ChatBot")
+# with st.container(border=False):
+#     st.markdown("## 🤖 AI Personal ChatBot")
 
 # -------------------------------------------------------
 # Current Chat Title
 # -------------------------------------------------------
 
-# response = requests.get(session_url, headers=headers)
-# sessions = response.json()
+current_session = None
 
-get_session_url = f"{session_url}/{st.session_state.session_id}"
-response = requests.get(get_session_url, headers=headers)
-current_session = response.json()
+if st.session_state.session_id:
+    get_session_url = f"{session_url}/{st.session_state.session_id}"
+    response = requests.get(get_session_url, headers=headers)
+    current_session = response.json()
 
 if current_session:
 
-    with st.container(border=True):
+    with st.container(border=False):
 
         st.markdown(
-            f"### 📄 {current_session['title']}"
+            f"#### 📄 {current_session['title']}"
         )
 
-        # st.caption(
-        #     f"Last updated : {current_session.updated_at.strftime('%d %b %Y • %I:%M %p')}"
-        # )
+        updated_at = datetime.fromisoformat(current_session["updated_at"])
 
         st.caption(
-            f"Last updated : {current_session['updated_at']}"
+            f"Last updated: {updated_at.strftime('%d %b %Y • %I:%M %p')}"
         )
+else:
+
+    with st.container(border=True):
+        st.markdown("### 📄 New Chat")
 
 # -------------------------------------------------------
 # Conversation
@@ -263,6 +265,9 @@ if prompt := st.chat_input(
                 }
             )
         llm_response = response.json()
+
+        # Update active session
+        st.session_state.session_id = llm_response["session_id"]
 
         # for chunk in chat.chat(
         #     session_id=st.session_state.session_id,
