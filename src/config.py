@@ -12,6 +12,8 @@ class LLMSettings(BaseModel):
     example_query: str = "Hello, how are you?"
     provider: str = "ollama"
     model_name: str = "gemma2:2b"
+    ollama_url: str = "http://ollama:11434"
+    # ollama_url: str = "http://127.0.0.1:11434"
     # model_name: str = "gemma4:latest"
     # model_name: str = "llama3.1:8b"
     stream: bool = True
@@ -31,8 +33,15 @@ class SummarySettings(BaseModel):
 
 class APISettings(BaseModel):
 
-    chat_url: str = "http://127.0.0.1:8000/api/chat"
-    session_url: str = "http://127.0.0.1:8000/api/sessions"
+    # chat_url: str = "http://127.0.0.1:8000/api/chat"
+    # session_url: str = "http://127.0.0.1:8000/api/sessions"
+
+    # chat_url: str = "http://host.docker.internal:8000/api/chat"
+    # session_url: str = "http://host.docker.internal:8000/api/sessions"
+
+    chat_url: str = "http://backend:8000/api/chat"
+    session_url: str = "http://backend:8000/api/sessions"
+
     headers: dict = {
         'Content-Type': 'application/json'
         }

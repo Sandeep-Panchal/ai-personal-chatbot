@@ -1,12 +1,12 @@
 from ollama import Client
-from app.config import settings
-from app.utils.prompt_loading import PromptLoading
+from src.config import settings
+from src.app.utils.prompt_loading import PromptLoading
 
 class OllamaClient:
 
     def __init__(self):
 
-        self.client = Client()
+        self.client = Client(host=settings.llm.ollama_url)
         self.prompt_loader = PromptLoading()
 
     def ollama_chat(self, history):
@@ -27,7 +27,7 @@ class OllamaClient:
         for part in self.client.chat(
             model=settings.llm.model_name,
             messages=messages,
-            stream=settings.llm.stream
+            stream=settings.llm.stream,
             ):
 
             yield part['message']['content']

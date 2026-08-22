@@ -1,7 +1,7 @@
 
-from app.database.repositories.message_repository import MessageRepository
-from app.memory.session_memory import SessionMemory
-from app.models.chat_message import ChatMessage
+from src.app.database.repositories.message_repository import MessageRepository
+from src.app.memory.session_memory import SessionMemory
+from src.app.models.chat_message import ChatMessage
 
 from datetime import datetime
 

@@ -1,6 +1,6 @@
 import sqlite3
-from app.database.connection import DBConnection
-from app.models.chat_session import ChatSession
+from src.app.database.connection import DBConnection
+from src.app.models.chat_session import ChatSession
 
 class SessionRepository:
 

@@ -1,6 +1,6 @@
-from app.config import settings
-from app.utils.prompt_loading import PromptLoading
-from app.models.chat_message import ChatMessage
+from src.config import settings
+from src.app.utils.prompt_loading import PromptLoading
+from src.app.models.chat_message import ChatMessage
 
 class SummaryAgent:
 

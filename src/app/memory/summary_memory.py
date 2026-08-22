@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from app.config import settings
-from app.agents.summary_agent import SummaryAgent
-from app.database.repositories.message_repository import MessageRepository
-from app.database.repositories.summary_repository import SummaryRepository
+from src.config import settings
+from src.app.agents.summary_agent import SummaryAgent
+from src.app.database.repositories.message_repository import MessageRepository
+from src.app.database.repositories.summary_repository import SummaryRepository
 
 class SummaryMemory:
 

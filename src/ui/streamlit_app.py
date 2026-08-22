@@ -1,11 +1,8 @@
-from app.database.init_db import DatabaseInitializer
-DatabaseInitializer().initialize_database()
-
 import streamlit as st
+import requests
+from datetime import datetime
 
-from app.config import settings
-from app.core.chat import ChatService
-from app.core.session import SessionManager
+from src.config import settings
 
 # -------------------------------------------------------
 # Page Config
@@ -17,25 +14,20 @@ st.set_page_config(
     layout="wide",
 )
 
+# API Configs
+chat_url= settings.api_settings.chat_url
+session_url = settings.api_settings.session_url
+headers = settings.api_settings.headers
+
 # -------------------------------------------------------
 # Session State
 # -------------------------------------------------------
 
-if "chat_service" not in st.session_state:
-    st.session_state.chat_service = ChatService()
-
-if "session_manager" not in st.session_state:
-    st.session_state.session_manager = SessionManager()
-
 if "session_id" not in st.session_state:
-    st.session_state.session_id = (
-        st.session_state.session_manager.create_session()
-    )
+    st.session_state.session_id = None
 
 if "delete_session" not in st.session_state:
     st.session_state.delete_session = None
-
-chat = st.session_state.chat_service
 
 # -------------------------------------------------------
 # Sidebar
@@ -43,30 +35,29 @@ chat = st.session_state.chat_service
 
 with st.sidebar:
 
+    with st.container(border=False):
+        st.markdown("## 🤖 AI Personal ChatBot")
+        
     if st.button(
         "➕ New Chat",
         use_container_width=False,
         type="primary",
     ):
 
-        st.session_state.session_id = (
-            st.session_state.session_manager.create_session()
-        )
+        st.session_state.session_id = None
 
         st.rerun()
 
-    # st.divider()
-
-    # st.subheader("💬 Conversations")
     st.header("Chats")
 
-    sessions = chat.get_all_sessions()
+    response = requests.get(session_url, headers=headers)
+    sessions = response.json()
 
     if sessions:
 
         for session in sessions:
 
-            active = session.session_id == st.session_state.session_id
+            active = session["session_id"] == st.session_state.session_id
 
             icon = "🟢" if active else "🟡"
 
@@ -75,13 +66,13 @@ with st.sidebar:
             with col1:
 
                 if st.button(
-                    session.title,
-                    key=f"chat_{session.session_id}",
+                    session["title"],
+                    key=f"chat_{session['session_id']}",
                     icon=icon,
                     use_container_width=False,
                     type="tertiary",
                 ):
-                    st.session_state.session_id = session.session_id
+                    st.session_state.session_id = session["session_id"]
                     st.rerun()
 
             with col2:
@@ -90,10 +81,10 @@ with st.sidebar:
 
                     if st.button(
                         "🗑 Delete Chat",
-                        key=f"delete_{session.session_id}",
+                        key=f"delete_{session['session_id']}",
                         use_container_width=True,
                     ):
-                        st.session_state.delete_session = session.session_id
+                        st.session_state.delete_session = session["session_id"]
                         st.rerun()
 
     else:
@@ -109,15 +100,17 @@ with st.sidebar:
     st.write(f"**Streaming:** {'✅ Enabled' if settings.llm.stream else '❌ Disabled'}")
 
 if st.session_state.delete_session:
-
-    session = chat.get_session(st.session_state.delete_session)
+    delete_session_id = st.session_state.delete_session
+    get_session_url = f"{session_url}/{delete_session_id}"
+    response = requests.get(get_session_url, headers=headers)
+    delete_session = response.json()
 
     @st.dialog("🗑 Delete Chat")
     def confirm_delete():
 
         st.write("This will permanently delete the following chat:")
 
-        st.info(f"**{session.title}**")
+        st.info(f"**{delete_session['title']}**")
 
         st.caption("This action cannot be undone.")
 
@@ -140,18 +133,20 @@ if st.session_state.delete_session:
                 use_container_width=True,
             ):
 
-                chat.delete_chat(session.session_id)
+                # delete_session_url = f"{session_url}/{session['session_id']}"
+                delete_session_url = f"{session_url}/{delete_session_id}"
+                requests.delete(delete_session_url, headers=headers)
 
                 st.session_state.delete_session = None
 
-                sessions = chat.get_all_sessions()
+                response = requests.get(session_url, headers=headers)
+                sessions = response.json()
 
                 if sessions:
-                    st.session_state.session_id = sessions[0].session_id
+                    st.session_state.session_id = sessions[0]["session_id"]
                 else:
-                    st.session_state.session_id = (
-                        st.session_state.session_manager.create_session()
-                    )
+                    # No persisted conversations remain
+                    st.session_state.session_id = None
 
                 st.rerun()
 
@@ -161,42 +156,45 @@ if st.session_state.delete_session:
 # Header
 # -------------------------------------------------------
 
-with st.container(border=False):
-    st.markdown("## 🤖 AI Personal ChatBot")
+# with st.container(border=False):
+#     st.markdown("## 🤖 AI Personal ChatBot")
 
 # -------------------------------------------------------
 # Current Chat Title
 # -------------------------------------------------------
 
-sessions = chat.get_all_sessions()
+current_session = None
 
-current_session = chat.get_session(
-    st.session_state.session_id
-)
+if st.session_state.session_id:
+    get_session_url = f"{session_url}/{st.session_state.session_id}"
+    response = requests.get(get_session_url, headers=headers)
+    current_session = response.json()
 
 if current_session:
 
-    with st.container(border=True):
+    with st.container(border=False):
 
         st.markdown(
-            f"### 📄 {current_session.title}"
+            f"#### 📄 {current_session['title']}"
         )
 
-        # st.caption(
-        #     f"Last updated : {current_session.updated_at.strftime('%d %b %Y • %I:%M %p')}"
-        # )
+        updated_at = datetime.fromisoformat(current_session["updated_at"])
 
         st.caption(
-            f"Last updated : {current_session.updated_at}"
+            f"Last updated: {updated_at.strftime('%d %b %Y • %I:%M %p')}"
         )
+else:
+
+    with st.container(border=True):
+        st.markdown("### 📄 New Chat")
 
 # -------------------------------------------------------
 # Conversation
 # -------------------------------------------------------
 
-history = chat.get_message_history(
-    st.session_state.session_id
-)
+get_history_url = f"{session_url}/{st.session_state.session_id}/messages"
+response = requests.get(get_history_url, headers=headers)
+history = response.json()
 
 with st.container(border=True):
 
@@ -247,7 +245,7 @@ if prompt := st.chat_input(
             ):
 
         status = st.empty()
-        response = st.empty()
+        response_container = st.empty()
 
         # Initial status
         status.info("🤔 Thinking...")
@@ -255,22 +253,39 @@ if prompt := st.chat_input(
         full_response = ""
         first_chunk = True
 
-        for chunk in chat.chat(
-            session_id=st.session_state.session_id,
-            user_message=prompt,
-        ):
+        response = requests.post(
+            chat_url,
+            headers=headers,
+            json={
+                "session_id": st.session_state.session_id,
+                "query": prompt
+                }
+            )
 
-            # First token received
-            if first_chunk:
-                # status.info("⚡ Generating response...")
-                status.info("✍️ Generating response...")
-                first_chunk = False
+        print(f"response streamlit {response}")
+        
+        llm_response = response.json()
 
-            full_response += chunk
-            response.markdown(full_response + "▌")
+        # Update active session
+        st.session_state.session_id = llm_response["session_id"]
 
+        # for chunk in chat.chat(
+        #     session_id=st.session_state.session_id,
+        #     user_message=prompt,
+        # ):
+
+        #     # First token received
+        #     if first_chunk:
+        #         # status.info("⚡ Generating response...")
+        #         status.info("✍️ Generating response...")
+        #         first_chunk = False
+
+        #     full_response += chunk
+        #     response.markdown(full_response + "▌")
+
+        full_response = llm_response["llm_response"]
         # Final response
-        response.markdown(full_response)
+        response_container.markdown(full_response)
 
         # Remove status
         status.empty()

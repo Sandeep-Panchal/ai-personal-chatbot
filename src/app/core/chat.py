@@ -1,13 +1,13 @@
-from app.llm.ollama_call import OllamaClient
+from src.app.llm.ollama_call import OllamaClient
 
-from app.memory.session_memory import SessionMemory
-from app.memory.message_memory import MessageMemory
-from app.memory.summary_memory import SummaryMemory
+from src.app.memory.session_memory import SessionMemory
+from src.app.memory.message_memory import MessageMemory
+from src.app.memory.summary_memory import SummaryMemory
 
-from app.agents.title_agent import TitleAgent
+from src.app.agents.title_agent import TitleAgent
 
-from app.models.chat_session import ChatSession
-from app.models.chat_message import ChatMessage
+from src.app.models.chat_session import ChatSession
+from src.app.models.chat_message import ChatMessage
 
 from typing import Generator
 

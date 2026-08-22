@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 
-from app.core.chat import ChatService
-from app.core.session import SessionManager
-from app.api_schema import (
+from src.app.database.init_db import DatabaseInitializer
+from src.app.core.chat import ChatService
+from src.app.core.session import SessionManager
+from src.app.api.api_schema import (
     ChatInputSchema,
     ChatOutputSchema,
     AllSessionSchema,
@@ -10,22 +11,12 @@ from app.api_schema import (
     SessionIDSchema
 )
 
-chat = ChatService()
-session = SessionManager()
-
 # Creating an instance of FastAPI
 fapp = FastAPI()
 
-# @fapp.post("/api/chat", response_model=ChatOutputSchema)
-# def chat_api(data: ChatInputSchema):
-
-#     response = chat.chat(
-#         session_id=data.session_id,
-#         user_message=data.query,
-#         )
-#     response_text = "".join(response)
-
-#     return {"llm_response": response_text}
+chat = ChatService()
+session = SessionManager()
+DatabaseInitializer().initialize_database()
 
 @fapp.post("/api/chat", response_model=ChatOutputSchema)
 def chat_api(data: ChatInputSchema):
@@ -41,6 +32,8 @@ def chat_api(data: ChatInputSchema):
     )
 
     response_text = "".join(response)
+
+    print(f"response_text fastapi {response_text}")
 
     return {
         "session_id": session_id,

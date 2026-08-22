@@ -1,5 +1,5 @@
 import uuid
-from app.memory.session_memory import SessionMemory
+from src.app.memory.session_memory import SessionMemory
 
 class SessionManager:
 

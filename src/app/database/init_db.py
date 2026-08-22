@@ -1,6 +1,6 @@
 import sqlite3
-from app.database.connection import DBConnection
-from app.database.schema import (
+from src.app.database.connection import DBConnection
+from src.app.database.schema import (
     sessions_schema,
     messages_schema,
     summary_schema

@@ -1,5 +1,5 @@
-from app.config import settings
-from app.utils.prompt_loading import PromptLoading
+from src.config import settings
+from src.app.utils.prompt_loading import PromptLoading
 
 class TitleAgent:
 

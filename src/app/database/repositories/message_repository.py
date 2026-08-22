@@ -1,7 +1,7 @@
 import sqlite3
-from app.database.connection import DBConnection
-from app.models.chat_message import ChatMessage
-from app.config import settings
+from src.app.database.connection import DBConnection
+from src.app.models.chat_message import ChatMessage
+from src.config import settings
 
 class MessageRepository:
 

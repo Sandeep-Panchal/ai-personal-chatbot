@@ -1,5 +1,5 @@
-from app.database.repositories.session_repository import SessionRepository
-from app.models.chat_session import ChatSession
+from src.app.database.repositories.session_repository import SessionRepository
+from src.app.models.chat_session import ChatSession
 
 from datetime import datetime
 
