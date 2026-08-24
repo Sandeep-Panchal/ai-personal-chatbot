@@ -1,11 +1,12 @@
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import json
 
 from src.app.database.init_db import DatabaseInitializer
 from src.app.core.chat import ChatService
 from src.app.core.session import SessionManager
 from src.app.api.api_schema import (
     ChatInputSchema,
-    ChatOutputSchema,
     AllSessionSchema,
     MessageHistorySchema,
     SessionIDSchema
@@ -18,7 +19,10 @@ chat = ChatService()
 session = SessionManager()
 DatabaseInitializer().initialize_database()
 
-@fapp.post("/api/chat", response_model=ChatOutputSchema)
+@fapp.post(
+        "/api/chat",
+        response_class=StreamingResponse
+        )
 def chat_api(data: ChatInputSchema):
 
     session_id = data.session_id
@@ -26,19 +30,23 @@ def chat_api(data: ChatInputSchema):
     if session_id is None:
         session_id = session.create_session()
 
-    response = chat.chat(
-        session_id=session_id,
-        user_message=data.query,
+    def generate():
+
+        response = chat.chat(
+            session_id=session_id,
+            user_message=data.query,
+        )
+
+        for chunk in response:
+            yield json.dumps({
+                "session_id": session_id,
+                "llm_response": chunk
+                }) + "\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson"
     )
-
-    response_text = "".join(response)
-
-    print(f"response_text fastapi {response_text}")
-
-    return {
-        "session_id": session_id,
-        "llm_response": response_text,
-    }
 
 @fapp.post("/api/sessions", response_model=SessionIDSchema)
 def create_session():
