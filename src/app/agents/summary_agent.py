@@ -1,12 +1,13 @@
 from src.config import settings
+from src.app.llm.ollama_call import OllamaClient
 from src.app.utils.prompt_loading import PromptLoading
 from src.app.models.chat_message import ChatMessage
 
 class SummaryAgent:
 
-    def __init__(self, ollama_client):
+    def __init__(self):
 
-        self.ollama = ollama_client
+        self.ollama = OllamaClient()
         self.prompt_loader = PromptLoading()
 
         self.summary_prompt = self.prompt_loader.load_prompt(
@@ -29,7 +30,11 @@ class SummaryAgent:
 
         previous_summary = previous_summary or "<NO_PREVIOUS_SUMMARY>"
 
-        prompt = self.summary_prompt.format(
+        summary_prompt = self.prompt_loader.load_prompt(
+            self.prompt_loader.SUMMARY_PROMPT
+            )
+
+        prompt = summary_prompt.format(
             previous_summary=previous_summary,
             new_conversation=conversation_text
             )
@@ -49,7 +54,7 @@ class SummaryAgent:
                 },
             ]
 
-        response = self.ollama.chat(
+        response = self.ollama.client.chat(
             model=settings.llm.model_name,
             messages=messages,
             stream=False,

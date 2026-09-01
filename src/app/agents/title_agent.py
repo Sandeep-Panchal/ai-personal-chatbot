@@ -1,14 +1,31 @@
 from src.config import settings
+from src.app.core.chat import ChatService
 from src.app.utils.prompt_loading import PromptLoading
+from src.app.memory.session_memory import SessionMemory
+from src.app.llm.ollama_call import OllamaClient
 
 class TitleAgent:
 
-    def __init__(self, ollama_client):
+    def __init__(self):
 
-        self.ollama = ollama_client
+        self.ollama = OllamaClient()
         self.prompt_loader = PromptLoading()
+        self.chat = ChatService()
+        self.session_memory = SessionMemory()
 
-    def generate_title(self, history: list[dict]) -> str:
+        self.default_title = "New Chat"
+
+    def should_generate_title(self, session_id: str):
+
+        session_data = self.session_memory.get_session_by_id(session_id=session_id)
+
+        if session_data.title == self.default_title:
+            return True
+        return False
+
+    def generate_title(self, session_id: str) -> None:
+
+        history = self.chat.get_message_history(session_id=session_id)
 
         prompt_template = self.prompt_loader.load_prompt(
                 self.prompt_loader.TITLE_PROMPT
@@ -37,14 +54,20 @@ class TitleAgent:
                 },
             ]
 
-        response = self.ollama.chat(
+        response = self.ollama.client.chat(
             model=settings.llm.model_name,
             messages=messages,
             stream=False,
         )
 
-        return response["message"]["content"].strip()
-    
+        updated_title = response["message"]["content"].strip()
+        self.session_memory.update_session_title(
+                        title=updated_title,
+                        session_id=session_id
+                    )
+
+        return updated_title
+
 if __name__=="__main__":
 
     from app.llm.ollama_call import OllamaClient

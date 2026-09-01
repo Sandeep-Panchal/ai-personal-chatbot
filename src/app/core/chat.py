@@ -2,9 +2,6 @@ from src.app.llm.ollama_call import OllamaClient
 
 from src.app.memory.session_memory import SessionMemory
 from src.app.memory.message_memory import MessageMemory
-from src.app.memory.summary_memory import SummaryMemory
-
-from src.app.agents.title_agent import TitleAgent
 
 from src.app.models.chat_session import ChatSession
 from src.app.models.chat_message import ChatMessage
@@ -18,10 +15,6 @@ class ChatService:
         self.ollama = OllamaClient()
         self.session_memory = SessionMemory()
         self.message_memory = MessageMemory()
-        self.summary_memory = SummaryMemory(self.ollama.client)
-        self.title_agent = TitleAgent(self.ollama.client)
-
-        self.default_title = "New Chat"
 
     def messages_input_formatting(self, messages_data: list[ChatMessage]) -> list[dict]:
         
@@ -66,22 +59,6 @@ class ChatService:
             session_id=session_id,
             message=ai_message.strip(),
         )
-
-        # Step 6 - Create title if not created
-        session_data = self.get_session(session_id=session_id)
-                    
-        if session_data.title == self.default_title:
-            history = self.get_message_history(session_id=session_id)
-
-            title = self.title_agent.generate_title(history)
-
-            self.session_memory.update_session_title(
-                title=title,
-                session_id=session_id
-            )
-
-        # Step 7 - call update summary to add summary periodically
-        self.summary_memory.update_summary(session_id=session_id)
     
     def get_message_history(self, session_id: str) -> list[dict]:
         
@@ -141,3 +118,4 @@ if __name__ == "__main__":
     # # print(history)
 
     # # print(type(history))
+

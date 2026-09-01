@@ -5,10 +5,10 @@ class ChatInputSchema(BaseModel):
     session_id: str | None = None
     query: str = Field(min_length=1)
 
-# class ChatOutputSchema(BaseModel):
-#     session_id: str
-#     llm_response: str = Field(min_length=1)
-
+class ChatOutputSchema(BaseModel):
+    session_id: str
+    llm_response: str = Field(min_length=1)
+    
 class SessionIDSchema(BaseModel):
     session_id: str = Field(min_length=1)
 

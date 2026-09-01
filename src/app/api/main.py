@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import json
 
+from src.app.graph.graph import GraphBuilder
 from src.app.database.init_db import DatabaseInitializer
 from src.app.core.chat import ChatService
 from src.app.core.session import SessionManager
@@ -9,7 +10,8 @@ from src.app.api.api_schema import (
     ChatInputSchema,
     AllSessionSchema,
     MessageHistorySchema,
-    SessionIDSchema
+    SessionIDSchema,
+    ChatOutputSchema
 )
 
 # Creating an instance of FastAPI
@@ -19,10 +21,7 @@ chat = ChatService()
 session = SessionManager()
 DatabaseInitializer().initialize_database()
 
-@fapp.post(
-        "/api/chat",
-        response_class=StreamingResponse
-        )
+@fapp.post("/api/chat", response_model=ChatOutputSchema)
 def chat_api(data: ChatInputSchema):
 
     session_id = data.session_id
@@ -30,23 +29,53 @@ def chat_api(data: ChatInputSchema):
     if session_id is None:
         session_id = session.create_session()
 
-    def generate():
+    graph = GraphBuilder()
+    graph_compile = graph.graph_builder()
+    
+    graph_response = graph_compile.invoke({
+        "session_id":session_id,
+        "user_message":data.query,
+        "llm_response":""
+    })
 
-        response = chat.chat(
-            session_id=session_id,
-            user_message=data.query,
-        )
+    print(f"graph response: {graph_response}")
 
-        for chunk in response:
-            yield json.dumps({
-                "session_id": session_id,
-                "llm_response": chunk
-                }) + "\n"
+    llm_response = graph_response["llm_response"]
 
-    return StreamingResponse(
-        generate(),
-        media_type="application/x-ndjson"
-    )
+    return {
+        "session_id": session_id,
+        "llm_response": llm_response,
+    }
+
+
+# @fapp.post(
+#         "/api/chat",
+#         response_class=StreamingResponse
+#         )
+# def chat_api(data: ChatInputSchema):
+
+#     session_id = data.session_id
+
+#     if session_id is None:
+#         session_id = session.create_session()
+
+#     def generate():
+
+#         response = chat.chat(
+#             session_id=session_id,
+#             user_message=data.query,
+#         )
+
+#         for chunk in response:
+#             yield json.dumps({
+#                 "session_id": session_id,
+#                 "llm_response": chunk
+#                 }) + "\n"
+
+#     return StreamingResponse(
+#         generate(),
+#         media_type="application/x-ndjson"
+#     )
 
 @fapp.post("/api/sessions", response_model=SessionIDSchema)
 def create_session():
