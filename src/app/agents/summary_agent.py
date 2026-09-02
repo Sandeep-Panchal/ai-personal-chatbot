@@ -9,10 +9,6 @@ class SummaryAgent:
 
         self.ollama = OllamaClient()
         self.prompt_loader = PromptLoading()
-
-        self.summary_prompt = self.prompt_loader.load_prompt(
-                                self.prompt_loader.SUMMARY_PROMPT
-                            )
     
     def conversation_to_text(self, conversation: list[ChatMessage]) -> str:
 

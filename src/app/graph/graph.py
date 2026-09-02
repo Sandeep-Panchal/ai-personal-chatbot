@@ -1,11 +1,5 @@
 from src.app.graph.state import ChatbotState
-from src.app.graph.nodes import (
-    chat_node,
-    should_generate_title_node,
-    title_router,
-    title_node,
-    summary_node
-)
+from src.app.graph.nodes import *
 
 from langgraph.graph import StateGraph, START, END
 
@@ -21,6 +15,7 @@ class GraphBuilder:
         self.chatbot_graph.add_node("chat_node", chat_node)
         self.chatbot_graph.add_node("should_generate_title_node", should_generate_title_node)
         self.chatbot_graph.add_node("title_node", title_node)
+        self.chatbot_graph.add_node("should_summarize_node", should_summarize_node)
         self.chatbot_graph.add_node("summary_node", summary_node)
 
     def create_edges(self):
@@ -28,16 +23,26 @@ class GraphBuilder:
         # Creating edges
         self.chatbot_graph.add_edge(START, "chat_node")
         self.chatbot_graph.add_edge("chat_node", "should_generate_title_node")
+
         self.chatbot_graph.add_conditional_edges(
             "should_generate_title_node",
             title_router,
             {
                 "true": "title_node",
-                "false": "summary_node"
+                "false": "should_summarize_node"
             }
         )
 
-        self.chatbot_graph.add_edge("title_node", "summary_node")
+        self.chatbot_graph.add_conditional_edges(
+            "should_summarize_node",
+            summarize_router,
+            {
+                "true": "summary_node",
+                "false": END
+            }
+        )
+
+        self.chatbot_graph.add_edge("title_node", "should_summarize_node")
         self.chatbot_graph.add_edge("summary_node", END)
 
     def graph_builder(self):

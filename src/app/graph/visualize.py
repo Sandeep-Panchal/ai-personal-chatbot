@@ -11,7 +11,7 @@ graph_compile = graph.graph_builder()
 
 graph_image = graph_compile.get_graph().draw_mermaid_png()
 
-with open("chatbot_graph.png", "wb") as file:
+with open("./chatbot_graph.png", "wb") as file:
     file.write(graph_image)
 
 # uv run python -m src.app.graph.visualize

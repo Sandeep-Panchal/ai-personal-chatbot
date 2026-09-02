@@ -7,4 +7,5 @@ class ChatbotState(TypedDict):
     llm_response: str
     should_generate_title: bool
     title: str
+    should_summarize: bool
     summary: str

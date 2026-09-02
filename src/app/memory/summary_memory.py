@@ -13,11 +13,7 @@ class SummaryMemory:
         self.message_repo = MessageRepository()
         self.summary_agent = SummaryAgent()
 
-    def should_summarize(
-            self,
-            conversation_count: int,
-            last_summary_until: int,
-        ) -> tuple[bool, int | None]:
+    def should_summarize(self, session_id: str) -> tuple[bool, int | None]:
     
         """
         Decide whether a new conversation summary should be generated.
@@ -27,20 +23,22 @@ class SummaryMemory:
             (False, None)              -> Do nothing
         """
 
+        metadata = self.summary_metadata(session_id=session_id)
+
         trigger_count = (
             settings.summary_settings.STEP_THRESHOLD
-            + last_summary_until
+            + metadata["last_summary_until"]
             )
 
-        if conversation_count == trigger_count:
-            return True, last_summary_until + 1
+        if metadata["conversation_count"] == trigger_count:
+            return True, metadata["last_summary_until"] + 1
 
         return False, None
-    
-    def update_summary(self, session_id: str) -> None:
+
+    def summary_metadata(self, session_id: str) -> dict:
 
         conversation_count = self.message_repo.fetch_conversation_count(session_id)
-
+        
         last_summary = self.summary_repo.fetch_last_summary_by_session_id(session_id)
 
         if last_summary:
@@ -52,34 +50,36 @@ class SummaryMemory:
             previous_summary = None
             summary_version = 1
 
-        summarize, start_message_num = self.should_summarize(
-                                conversation_count=conversation_count,
-                                last_summary_until=last_summary_until,
-                            )
+        return {
+            "conversation_count": conversation_count,
+            "last_summary_until": last_summary_until,
+            "previous_summary": previous_summary,
+            "summary_version": summary_version
+        }
+    
+    def update_summary(self, session_id: str) -> None:
 
-        if summarize:
+        metadata = self.summary_metadata(session_id=session_id)
 
-            offset = start_message_num - 1
+        conversation = self.message_repo.fetch_messages_range(
+            session_id=session_id,
+            offset=metadata["last_summary_until"],
+        )
 
-            conversation = self.message_repo.fetch_messages_range(
-                session_id=session_id,
-                offset=offset,
-            )
+        summary = self.summary_agent.generate_summary(
+            new_conversation=conversation,
+            previous_summary=metadata["previous_summary"],
+        )
 
-            summary = self.summary_agent.generate_summary(
-                new_conversation=conversation,
-                previous_summary=previous_summary,
-            )
+        covers_until_message_id = metadata["conversation_count"] - settings.summary_settings.KEEP_LAST_MESSAGES
 
-            covers_until_message_id = conversation_count - settings.summary_settings.KEEP_LAST_MESSAGES
-
-            self.summary_repo.insert_summary(
-                session_id=session_id,
-                summary_version=summary_version,
-                messages_summary=summary,
-                covers_until_message_id=covers_until_message_id,
-                created_at=datetime.now(),
-            )
+        self.summary_repo.insert_summary(
+            session_id=session_id,
+            summary_version=metadata["summary_version"],
+            messages_summary=summary,
+            covers_until_message_id=covers_until_message_id,
+            created_at=datetime.now(),
+        )
 
     # def should_summarize(
     #         self,
