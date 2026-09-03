@@ -33,14 +33,17 @@ class SummarySettings(BaseModel):
 
 class APISettings(BaseModel):
 
+    # uncomment this if you are testing/running in local
     chat_url: str = "http://127.0.0.1:8000/api/chat"
     session_url: str = "http://127.0.0.1:8000/api/sessions"
 
-    # chat_url: str = "http://host.docker.internal:8000/api/chat"
-    # session_url: str = "http://host.docker.internal:8000/api/sessions"
-
+    # uncomment this if you are testing/running using docker
     # chat_url: str = "http://backend:8000/api/chat"
     # session_url: str = "http://backend:8000/api/sessions"
+
+    # ignore below 2 lines for now
+    # chat_url: str = "http://host.docker.internal:8000/api/chat"
+    # session_url: str = "http://host.docker.internal:8000/api/sessions"
 
     headers: dict = {
         'Content-Type': 'application/json'
