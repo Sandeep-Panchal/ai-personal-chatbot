@@ -1,3 +1,5 @@
+from langgraph.config import get_stream_writer
+
 from src.app.graph.state import ChatbotState
 from src.app.core.chat import ChatService
 from src.app.agents.title_agent import TitleAgent
@@ -8,17 +10,25 @@ title_agent = TitleAgent()
 summary_memory = SummaryMemory()
 
 # Creating node functions
+
 def chat_node(state: ChatbotState):
+    writer = get_stream_writer()
 
     response = chat.chat(
-                session_id = state["session_id"],
-                user_message = state["user_message"]
-            )
+        session_id=state["session_id"],
+        user_message=state["user_message"]
+    )
 
-    llm_response = "".join(response)
+    full_response = ""
+
+    for token in response:
+        full_response += token
+
+        # Send token immediately to LangGraph stream
+        writer(token)
 
     return {
-        "llm_response" : llm_response
+        "llm_response": full_response
     }
 
 def should_generate_title_node(state: ChatbotState):

@@ -21,7 +21,7 @@ chat = ChatService()
 session = SessionManager()
 DatabaseInitializer().initialize_database()
 
-@fapp.post("/api/chat", response_model=ChatOutputSchema)
+@fapp.post("/api/chat", response_class=StreamingResponse)
 def chat_api(data: ChatInputSchema):
 
     session_id = data.session_id
@@ -31,51 +31,28 @@ def chat_api(data: ChatInputSchema):
 
     graph = GraphBuilder()
     graph_compile = graph.graph_builder()
-    
-    graph_response = graph_compile.invoke({
-        "session_id":session_id,
-        "user_message":data.query,
-        "llm_response":""
-    })
 
-    print(f"graph response: {graph_response}")
+    def generate():
+        graph_stream = graph_compile.stream(
+            {
+                "session_id": session_id,
+                "user_message": data.query,
+                "llm_response": "",
+            },
+            stream_mode="custom"
+        )
 
-    llm_response = graph_response["llm_response"]
+        for chunk in graph_stream:
+            yield json.dumps({
+                "session_id": session_id,
+                "llm_response": chunk
+                }) + "\n"
 
-    return {
-        "session_id": session_id,
-        "llm_response": llm_response,
-    }
+    return StreamingResponse(
+        generate(),
+        media_type="text/plain"
+    )
 
-
-# @fapp.post(
-#         "/api/chat",
-#         response_class=StreamingResponse
-#         )
-# def chat_api(data: ChatInputSchema):
-
-#     session_id = data.session_id
-
-#     if session_id is None:
-#         session_id = session.create_session()
-
-#     def generate():
-
-#         response = chat.chat(
-#             session_id=session_id,
-#             user_message=data.query,
-#         )
-
-#         for chunk in response:
-#             yield json.dumps({
-#                 "session_id": session_id,
-#                 "llm_response": chunk
-#                 }) + "\n"
-
-#     return StreamingResponse(
-#         generate(),
-#         media_type="application/x-ndjson"
-#     )
 
 @fapp.post("/api/sessions", response_model=SessionIDSchema)
 def create_session():

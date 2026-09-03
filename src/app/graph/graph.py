@@ -58,12 +58,14 @@ if __name__=="__main__":
     graph_obj = GraphBuilder()
 
     graph_compile = graph_obj.graph_builder()
-
-    result = graph_compile.invoke({
-        "session_id":"123",
-        "user_message":"hi, how are you",
-        "llm_response":""
-    })
+    
+    result = graph_compile.stream({
+            "session_id":"123",
+            "user_message":"hi, how are you",
+            "llm_response":""
+        },
+        stream_mode="custom"
+        )
 
     print(result)
 

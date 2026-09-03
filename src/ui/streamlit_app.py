@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from datetime import datetime
+import json
 
 from src.config import settings
 
@@ -250,7 +251,6 @@ if prompt := st.chat_input(
         # Initial status
         status.info("🤔 Thinking...")
 
-        full_response = ""
         first_chunk = True
 
         response = requests.post(
@@ -259,29 +259,33 @@ if prompt := st.chat_input(
             json={
                 "session_id": st.session_state.session_id,
                 "query": prompt
-                }
+                },
+            stream=True
             )
-        
-        llm_response = response.json()
 
-        # Update active session
-        st.session_state.session_id = llm_response["session_id"]
+        full_response = ""
 
-        # for chunk in chat.chat(
-        #     session_id=st.session_state.session_id,
-        #     user_message=prompt,
-        # ):
+        for line in response.iter_lines(
+            decode_unicode=True,
+            chunk_size=None
+            ):
 
-        #     # First token received
-        #     if first_chunk:
-        #         # status.info("⚡ Generating response...")
-        #         status.info("✍️ Generating response...")
-        #         first_chunk = False
+            if not line:
+                continue
 
-        #     full_response += chunk
-        #     response.markdown(full_response + "▌")
+            llm_response = json.loads(line)
 
-        full_response = llm_response["llm_response"]
+            # Update active session
+            st.session_state.session_id = llm_response["session_id"]
+
+            # First token received
+            if first_chunk:
+                # status.info("⚡ Generating response...")
+                status.info("✍️ Generating response...")
+                first_chunk = False
+
+            full_response += llm_response["llm_response"]
+            response_container.markdown(full_response + "▌")
 
         # Final response
         response_container.markdown(full_response)
